@@ -18,27 +18,26 @@ jobs:
           terraform_version: 1.4.0
           cli_config_credentials_token: ${{ secrets.TFC_TOKEN }}
 
+      - name: Create terraform.auto.tfvars
+        run: |
+          cat <<EOF > terraform/terraform.auto.tfvars
+          hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
+          floating_ip_id = "${{ secrets.FLOATING_IP_ID }}"
+          ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
+          ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
+          EOF
+
       - name: Terraform Init
         run: terraform init
         working-directory: ./terraform
 
       - name: Terraform Plan
-        run: |
-          terraform plan \
-            -var="hcloud_token=${{ secrets.HCLOUD_TOKEN }}" \
-            -var="floating_ip_id=${{ secrets.FLOATING_IP_ID }}" \
-            -var="ssh_key_name=${{ secrets.SSH_KEY_NAME }}" \
-            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"
+        run: terraform plan
         working-directory: ./terraform
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          terraform apply -auto-approve \
-            -var="hcloud_token=${{ secrets.HCLOUD_TOKEN }}" \
-            -var="floating_ip_id=${{ secrets.FLOATING_IP_ID }}" \
-            -var="ssh_key_name=${{ secrets.SSH_KEY_NAME }}" \
-            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"
+        run: terraform apply -auto-approve
         working-directory: ./terraform
 
       - name: Get Terraform Output (Floating IP)
