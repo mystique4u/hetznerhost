@@ -20,6 +20,7 @@ The VM will be provisioned with the following tools and services:
 - **Neovim (nvim)**
 - **Git**
 
+
 ### Docker Compose Setup:
 The following services are installed and managed via Docker Compose:
 - **Vaultwarden** (a self-hosted password manager) [tutorial](https://github.com/vineethmn/vaultwarden-docker-compose/tree/main)
@@ -53,7 +54,7 @@ The following services are installed and managed via Docker Compose:
 - [ ] bring all docker containers up
 - [ ] *Add Hetzner DNS API support for the record creation.
 
-
+# if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
 ===
 

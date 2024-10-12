@@ -1,7 +1,7 @@
 name: Deploy and Manage Hetzner VM with Ansible
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:  # Allows manual triggering of the workflow 
 
 jobs:
   terraform:
@@ -37,9 +37,9 @@ jobs:
 
       - name: Install jq
         run: sudo apt-get install jq
-
+                      
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
@@ -48,13 +48,22 @@ jobs:
         run: |
           output=$(terraform output -json floating_ip)
           echo "Raw output: $output"
+          
+          # Check if output is empty
           if [ -z "$output" ]; then
             echo "No output received from Terraform for floating_ip."
             exit 1
           fi
-          floating_ip=$(echo $output | jq -r .value)
-          echo "floating_ip=$floating_ip" >> $GITHUB_OUTPUT
+      
+          # If output is just a number, we need to use that number to get the IP address
+          floating_ip_id=$(echo "$output")
+          echo "floating_ip_id=$floating_ip_id" >> $GITHUB_OUTPUT
+      
+          # Use the floating_ip_id to get the actual floating IP address
+          floating_ip_address=$(terraform output -json floating_ip_address)  # Assuming you have defined this output correctly
+          echo "floating_ip_address=$floating_ip_address" >> $GITHUB_OUTPUT
         working-directory: ./terraform
+      
 
   ansible:
     name: Configure VM with Ansible
