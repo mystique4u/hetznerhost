@@ -51,6 +51,7 @@ The following services are installed and managed via Docker Compose:
 - [ ] define networks for Docker compose
 - [ ] define iptables rules for external use
 - [ ] bring all docker containers up
+- [ ] *Add Hetzner DNS API support for the record creation.
 
 
 
