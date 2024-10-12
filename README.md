@@ -35,6 +35,13 @@ The following services are installed and managed via Docker Compose:
 - A Hetzner Cloud account with API access.
 - Terraform installed locally.
 - Ansible installed locally (for manual provisioning outside of GitHub Actions).
+- SSH Keypair
+- Set of github repository secrets with names and your own values
+    - `FLOATING_IP_ID` - name of your floating id in the hetzner cloud
+    - `HCLOUD_TOKEN` - hetzner cloud API token
+    - `SSH_KEY_NAME` - hetzner cloud SSH name. You have to add public key to the hetzner cloud.
+    - `SSH_PRIVATE_KEY` - private key from this SSH keypair
+    - `TFC_TOKEN` - Terreform Cloud API token. I use Terraform Cloude as backend for the state file
 
 ## To-Do
 - [ ] create server with terraform - put keys, create user?
