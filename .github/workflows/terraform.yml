@@ -40,9 +40,13 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
+      - name: Install jq
+        run: sudo apt-get install jq
+
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
-        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_OUTPUT
+        run: |
+          echo "floating_ip=$(terraform output -json floating_ip | jq -r .value)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
   ansible:
