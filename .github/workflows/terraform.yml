@@ -10,38 +10,36 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Updated to v3
+        uses: actions/checkout@v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.4.0
-
-      - name: Configure Terraform Cloud credentials
-        run: |
-          echo "credentials \"app.terraform.io\" { token = \"${{ secrets.TFC_TOKEN }}\" }" > ~/.terraformrc
+          cli_config_credentials_token: ${{ secrets.TFC_TOKEN }}
 
       - name: Terraform Init
         run: terraform init
         working-directory: ./terraform
 
       - name: Terraform Plan
-        run: terraform plan
+        run: |
+          terraform plan \
+            -var="hcloud_token=${{ secrets.HCLOUD_TOKEN }}" \
+            -var="floating_ip_id=${{ secrets.FLOATING_IP_ID }}" \
+            -var="ssh_key_name=${{ secrets.SSH_KEY_NAME }}" \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"
         working-directory: ./terraform
-        env:
-          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-          TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
-          TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          terraform apply -auto-approve \
+            -var="hcloud_token=${{ secrets.HCLOUD_TOKEN }}" \
+            -var="floating_ip_id=${{ secrets.FLOATING_IP_ID }}" \
+            -var="ssh_key_name=${{ secrets.SSH_KEY_NAME }}" \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"
         working-directory: ./terraform
-        env:
-          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-          TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
-          TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
@@ -55,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Updated to v3
+        uses: actions/checkout@v3
 
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
