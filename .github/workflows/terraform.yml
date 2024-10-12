@@ -35,6 +35,9 @@ jobs:
         run: terraform plan
         working-directory: ./terraform
 
+      - name: Install jq
+        run: sudo apt-get install jq
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
@@ -42,7 +45,15 @@ jobs:
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
-        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_OUTPUT
+        run: |
+          output=$(terraform output -json floating_ip)
+          echo "Raw output: $output"
+          if [ -z "$output" ]; then
+            echo "No output received from Terraform for floating_ip."
+            exit 1
+          fi
+          floating_ip=$(echo $output | jq -r .value)
+          echo "floating_ip=$floating_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
   ansible:
