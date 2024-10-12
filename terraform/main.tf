@@ -43,10 +43,15 @@ resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
   server_id      = hcloud_server.vm.id   # Assign the Floating IP to this server
 }
 
+# Data block to retrieve the Floating IP details
+data "hcloud_floating_ip" "ip" {
+  id = var.floating_ip_id
+}
+
 # Output the Floating IP Address
 output "floating_ip" {
   description = "The floating IP address assigned to the VM"
-  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_address
+  value       = data.hcloud_floating_ip.ip.ip_address
 }
 
 # Variables
