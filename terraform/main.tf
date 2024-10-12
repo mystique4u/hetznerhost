@@ -1,57 +1,55 @@
 terraform {
   backend "remote" {
-    organization = "itin"
+    organization = "itin"  # Replace with your Terraform Cloud organization name
 
     workspaces {
-      name = "hetznercloud"
+      name = "hetznercloud"  # Replace with the Terraform Cloud workspace name
     }
   }
 
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.33.0"
+      version = "1.33.0"  # Specify the provider version
     }
   }
 }
 
 provider "hcloud" {
-  token = var.hcloud_token
+  token = var.hcloud_token  # Hetzner Cloud API token
 }
 
+# SSH Key Resource - Ensure this key already exists in Hetzner Cloud
 resource "hcloud_ssh_key" "ssh_key" {
   name       = var.ssh_key_name
   public_key = var.ssh_public_key
 }
 
+# Hetzner Cloud VM resource
 resource "hcloud_server" "vm" {
   name        = "github-action-vm"
-  server_type = "cx22"
-  image       = "ubuntu-22.04"
-  location    = "nbg1"
+  server_type = "cx22"  # Choose the server type (e.g., cx11, cx21, etc.)
+  image       = "ubuntu-22.04"  # Base OS image
+  location    = "nbg1"  # Hetzner data center location (e.g., nbg1, fsn1)
 
-  ssh_keys = [hcloud_ssh_key.ssh_key.id]
+  ssh_keys = [
+    hcloud_ssh_key.ssh_key.name  # Assign SSH key to the server
+  ]
 }
 
-data "hcloud_floating_ip" "ip" {
-  id = var.floating_ip_id
-}
-
+# Assign the existing Floating IP to the server
 resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
-  floating_ip_id = data.hcloud_floating_ip.ip.id
-  server_id      = hcloud_server.vm.id
+  floating_ip_id = var.floating_ip_id  # ID of the existing Floating IP
+  server_id      = hcloud_server.vm.id   # Assign the Floating IP to this server
 }
 
-output "server_ip" {
-  description = "The public IP address of the server"
-  value       = hcloud_server.vm.ipv4_address
-}
-
+# Output the Floating IP Address
 output "floating_ip" {
   description = "The floating IP address assigned to the VM"
-  value       = data.hcloud_floating_ip.ip.ip_address
+  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_address
 }
 
+# Variables
 variable "hcloud_token" {
   description = "Hetzner Cloud API token"
   type        = string
@@ -64,7 +62,7 @@ variable "floating_ip_id" {
 }
 
 variable "ssh_key_name" {
-  description = "Name of the SSH key in Hetzner Cloud"
+  description = "Name of the existing SSH key in Hetzner Cloud"
   type        = string
 }
 
