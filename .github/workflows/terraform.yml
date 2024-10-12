@@ -46,7 +46,9 @@ jobs:
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
         run: |
-          echo "floating_ip=$(terraform output -json floating_ip | jq -r .value)" >> $GITHUB_OUTPUT
+          output=$(terraform output -json floating_ip)
+          echo "Raw output: $output"
+          echo "floating_ip=$(echo $output | jq -r .value)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
   ansible:
