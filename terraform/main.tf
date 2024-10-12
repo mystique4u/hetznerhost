@@ -37,21 +37,21 @@ resource "hcloud_server" "vm" {
   ]
 }
 
-# Assign the existing Floating IP to the server
-resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
-  floating_ip_id = var.floating_ip_id  # ID of the existing Floating IP
-  server_id      = hcloud_server.vm.id   # Assign the Floating IP to this server
+# Data block to retrieve the existing Floating IP by name
+data "hcloud_floating_ip" "existing" {
+  name = var.floating_ip_name  # Use the name of the existing Floating IP
 }
 
-# Data block to retrieve the Floating IP details
-data "hcloud_floating_ip" "ip" {
-  id = var.floating_ip_id
+# Assign the existing Floating IP to the server
+resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
+  floating_ip_id = data.hcloud_floating_ip.existing.id  # Get the ID from the data block
+  server_id      = hcloud_server.vm.id                    # Assign the Floating IP to this server
 }
 
 # Output the Floating IP Address
 output "floating_ip" {
   description = "The floating IP address assigned to the VM"
-  value       = data.hcloud_floating_ip.ip.ip_address
+  value       = data.hcloud_floating_ip.existing.ip_address
 }
 
 # Variables
@@ -61,9 +61,9 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "floating_ip_id" {
-  description = "Hetzner Cloud Floating IP ID to assign"
-  type        = string
+variable "floating_ip_name" {  # Renamed variable to represent the name
+  description = "Hetzner Cloud Floating IP name to assign"
+  type        = string  # This remains a string
 }
 
 variable "ssh_key_name" {
