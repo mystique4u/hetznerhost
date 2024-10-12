@@ -1,32 +1,76 @@
-provider "hcloud" {
-  token = var.hcloud_token  # Use API token from GitHub Secrets
+terraform {
+  backend "remote" {
+    organization = "itin"  # Replace with your Terraform Cloud organization name
+
+    workspaces {
+      name = "hetznercloud"  # Replace with the Terraform Cloud workspace name
+    }
+  }
+
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = "1.33.0"  # Specify the provider version
+    }
+  }
 }
 
+provider "hcloud" {
+  token = var.hcloud_token  # Hetzner Cloud API token
+}
+
+# Floating IP resource
+resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
+  floating_ip_id = var.floating_ip_id  # ID of the existing Floating IP
+  server_id      = hcloud_server.vm.id
+}
+
+# SSH Key Resource - Ensure this key already exists in Hetzner Cloud
+resource "hcloud_ssh_key" "ssh_key" {
+  name       = var.ssh_key_name
+  public_key = var.ssh_public_key
+}
+
+# Hetzner Cloud VM resource
 resource "hcloud_server" "vm" {
-  name        = "front-vm"
-  server_type = "cx22"       # Change based on your needs
-  image       = "ubuntu-22.04"  # OS Image
-  location    = "nbg1"       # Change the location to suit your needs
+  name        = "github-action-vm"
+  server_type = "cx22"  # Choose the server type (e.g., cx11, cx21, etc.)
+  image       = "ubuntu-22.04"  # Base OS image
+  location    = "nbg1"  # Hetzner data center location (e.g., nbg1, fsn1)
 
   ssh_keys = [
-    var.ssh_key_name
+    hcloud_ssh_key.ssh_key.name  # Assign SSH key to the server
   ]
 
-  # Optional: Add firewall, backups, or volumes
+  # Automatically assign the existing Floating IP
+  depends_on = [hcloud_floating_ip_assignment.vm_floating_ip]
 }
 
-output "server_ip" {
-  value = hcloud_server.vm.ipv4_address
+# Output the Floating IP Address
+output "floating_ip" {
+  description = "The floating IP address assigned to the VM"
+  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_address
 }
 
-# SSH Key Input Variable
-variable "ssh_key_name" {
-  description = "Name of the SSH Key in Hetzner Cloud"
-  type        = string
-}
-
+# Variables
 variable "hcloud_token" {
-  description = "Hetzner API Token"
+  description = "Hetzner Cloud API token"
   type        = string
   sensitive   = true
 }
+
+variable "floating_ip_id" {
+  description = "Hetzner Cloud Floating IP ID to assign"
+  type        = string
+}
+
+variable "ssh_key_name" {
+  description = "Name of the existing SSH key in Hetzner Cloud"
+  type        = string
+}
+
+variable "ssh_public_key" {
+  description = "Public SSH key content to use for access"
+  type        = string
+}
+

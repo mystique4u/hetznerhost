@@ -1,0 +1,15 @@
+---
+- name: Update OS and install Midnight Commander
+  hosts: all
+  become: true  # Ensure that Ansible uses sudo
+
+  tasks:
+    - name: Update all packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install Midnight Commander
+      apt:
+        name: mc
+        state: present
