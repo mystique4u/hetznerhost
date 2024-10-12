@@ -21,11 +21,14 @@ jobs:
         run: |
           echo "credentials \"app.terraform.io\" { token = \"${{ secrets.TFC_TOKEN }}\" }" > ~/.terraformrc
 
+      # Navigate to the terraform folder before running commands
       - name: Terraform Init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Plan
         run: terraform plan
+        working-directory: ./terraform
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
           FLOATING_IP_ID: ${{ secrets.FLOATING_IP_ID }}
@@ -33,6 +36,7 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: ./terraform
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
           FLOATING_IP_ID: ${{ secrets.FLOATING_IP_ID }}
@@ -41,6 +45,7 @@ jobs:
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
         run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_ENV
+        working-directory: ./terraform
 
   ansible:
     name: Configure VM with Ansible
