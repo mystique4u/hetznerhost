@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Updated to v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -21,7 +21,6 @@ jobs:
         run: |
           echo "credentials \"app.terraform.io\" { token = \"${{ secrets.TFC_TOKEN }}\" }" > ~/.terraformrc
 
-      # Navigate to the terraform folder before running commands
       - name: Terraform Init
         run: terraform init
         working-directory: ./terraform
@@ -30,7 +29,6 @@ jobs:
         run: terraform plan
         working-directory: ./terraform
         env:
-          # Pass required variables to Terraform Cloud using TF_VAR_ prefix
           TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
           TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
           TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
@@ -40,7 +38,6 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
         env:
-          # Pass required variables to Terraform Cloud using TF_VAR_ prefix
           TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
           TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
           TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
@@ -48,7 +45,7 @@ jobs:
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
-        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_ENV
+        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
   ansible:
@@ -58,20 +55,21 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Updated to v3
 
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
       - name: Add Private SSH Key for Ansible
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Run Ansible Playbook
         run: |
           echo "[hetzner_vm]" > ansible/inventory.ini
-          echo "${{ env.floating_ip }}" >> ansible/inventory.ini
+          echo "${{ needs.terraform.outputs.floating_ip }}" >> ansible/inventory.ini
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
         env:
-          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+          ANSIBLE_HOST_KEY_CHECKING: "False"
