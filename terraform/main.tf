@@ -33,7 +33,7 @@ resource "hcloud_server" "vm" {
   location    = "nbg1"  # Hetzner data center location (e.g., nbg1, fsn1)
 
   ssh_keys = [
-    hcloud_ssh_key.ssh_key.name  # Assign SSH key to the server
+    data.hcloud_ssh_key.existing.name  # Use the existing SSH key
   ]
 }
 
