@@ -51,7 +51,7 @@ resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
 # Output the Floating IP Address
 output "floating_ip" {
   description = "The floating IP address assigned to the VM"
-  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_id
+  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_id  # Ensure this is correct
 }
 
 # Variables

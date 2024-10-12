@@ -43,10 +43,18 @@ jobs:
       - name: Install jq
         run: sudo apt-get install jq
 
+      - name: Check Terraform Outputs
+        run: terraform output -json
+        working-directory: ./terraform
+
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
         run: |
           output=$(terraform output -json floating_ip)
+          if [ -z "$output" ]; then
+            echo "No output received from Terraform for floating_ip."
+            exit 1
+          fi
           echo "Raw output: $output"
           echo "floating_ip=$(echo $output | jq -r .value)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
