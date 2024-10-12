@@ -36,27 +36,13 @@ jobs:
         working-directory: ./terraform
 
       - name: Terraform Apply
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
-        working-directory: ./terraform
-
-      - name: Install jq
-        run: sudo apt-get install jq
-
-      - name: Check Terraform Outputs
-        run: terraform output -json
         working-directory: ./terraform
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
-        run: |
-          output=$(terraform output -json floating_ip)
-          echo "Raw output: $output"  # This will help in debugging
-          if [ -z "$output" ]; then
-            echo "No output received from Terraform for floating_ip."
-            exit 1
-          fi
-          echo "floating_ip=$(echo $output | jq -r .value)" >> $GITHUB_OUTPUT
+        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
   ansible:
