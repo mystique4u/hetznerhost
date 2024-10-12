@@ -33,8 +33,12 @@ resource "hcloud_server" "vm" {
   ssh_keys = [hcloud_ssh_key.ssh_key.id]
 }
 
+data "hcloud_floating_ip" "ip" {
+  id = var.floating_ip_id
+}
+
 resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
-  floating_ip_id = var.floating_ip_id
+  floating_ip_id = data.hcloud_floating_ip.ip.id
   server_id      = hcloud_server.vm.id
 }
 
@@ -45,7 +49,7 @@ output "server_ip" {
 
 output "floating_ip" {
   description = "The floating IP address assigned to the VM"
-  value       = hcloud_floating_ip_assignment.vm_floating_ip.floating_ip_id
+  value       = data.hcloud_floating_ip.ip.ip_address
 }
 
 variable "hcloud_token" {
