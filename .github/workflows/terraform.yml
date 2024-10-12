@@ -30,17 +30,21 @@ jobs:
         run: terraform plan
         working-directory: ./terraform
         env:
-          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-          FLOATING_IP_ID: ${{ secrets.FLOATING_IP_ID }}
-          SSH_KEY_NAME: ${{ secrets.SSH_KEY_NAME }}
+          # Pass required variables to Terraform Cloud
+          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+          TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
+          TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}  # You may also need to store this as a secret if required
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: ./terraform
         env:
-          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-          FLOATING_IP_ID: ${{ secrets.FLOATING_IP_ID }}
-          SSH_KEY_NAME: ${{ secrets.SSH_KEY_NAME }}
+          # Pass required variables to Terraform Cloud
+          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+          TF_VAR_floating_ip_id: ${{ secrets.FLOATING_IP_ID }}
+          TF_VAR_ssh_key_name: ${{ secrets.SSH_KEY_NAME }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
