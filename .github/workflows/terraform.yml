@@ -1,10 +1,7 @@
 name: Deploy and Manage Hetzner VM with Ansible
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   terraform:
@@ -43,7 +40,7 @@ jobs:
 
       - name: Get Terraform Output (Floating IP)
         id: terraform_output
-        run: echo "::set-output name=floating_ip::$(terraform output -raw floating_ip)"
+        run: echo "floating_ip=$(terraform output -raw floating_ip)" >> $GITHUB_ENV
 
   ansible:
     name: Configure VM with Ansible
@@ -57,10 +54,15 @@ jobs:
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
+      - name: Add Private SSH Key for Ansible
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
       - name: Run Ansible Playbook
         run: |
           echo "[hetzner_vm]" > ansible/inventory.ini
-          echo "${{ steps.terraform_output.outputs.floating_ip }}" >> ansible/inventory.ini
+          echo "${{ env.floating_ip }}" >> ansible/inventory.ini
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
         env:
-          ANSIBLE_SSH_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
+          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
