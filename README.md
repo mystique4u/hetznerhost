@@ -23,10 +23,10 @@ The VM will be provisioned with the following tools and services:
 ### Docker Compose Setup:
 The following services are installed and managed via Docker Compose:
 - **Vaultwarden** (a self-hosted password manager) [tutorial](https://github.com/vineethmn/vaultwarden-docker-compose/tree/main)
-- **Nginx** (web server) [tutorial] (https://xiahua.pages.dev/nginx-certbot-docker/)
+- **Nginx** (web server) [tutorial](https://xiahua.pages.dev/nginx-certbot-docker/)
 - **WireGuard** (VPN service with Web UI) [tutorial](https://github.com/linuxserver/docker-wireguard)
 - **iRedMail** (open-source mail server) 
-- **Certbot** (for SSL certificates) [tutorial] (https://xiahua.pages.dev/nginx-certbot-docker/)
+- **Certbot** (for SSL certificates) [tutorial](https://xiahua.pages.dev/nginx-certbot-docker/)
 - **MySQL/PostgreSQL** (database server) [tutorial](https://tecadmin.net/using-mysql-with-docker-compose/)
 - **Mailserver** ([mailserver/docker-mailserver](https://github.com/mailserver/docker-mailserver))
 
