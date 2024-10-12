@@ -20,9 +20,9 @@ provider "hcloud" {
 }
 
 # SSH Key Resource - Ensure this key already exists in Hetzner Cloud
-resource "hcloud_ssh_key" "ssh_key" {
-  name       = var.ssh_key_name
-  public_key = var.ssh_public_key
+# Data block to retrieve the existing SSH key
+data "hcloud_ssh_key" "existing" {
+  name = var.ssh_key_name  # Use the name of the existing SSH key
 }
 
 # Hetzner Cloud VM resource
