@@ -10,7 +10,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.33.0"  # Specify the provider version
+      version = "1.48.1"
     }
   }
 }
@@ -19,6 +19,10 @@ provider "hcloud" {
   token = var.hcloud_token  # Hetzner Cloud API token
 }
 
+# Data block to retrieve the existing Floating IP by name
+data "hcloud_floating_ip" "existing" {
+  name = var.floating_ip_name  # Use the name of the existing Floating IP
+}
 # SSH Key Resource - Ensure this key already exists in Hetzner Cloud
 # Data block to retrieve the existing SSH key
 data "hcloud_ssh_key" "existing" {
@@ -32,15 +36,18 @@ resource "hcloud_server" "vm" {
   image       = "ubuntu-22.04"  # Base OS image
   location    = "nbg1"  # Hetzner data center location (e.g., nbg1, fsn1)
 
+  public_net {
+    ipv4_enabled = true
+    ipv4 = data.hcloud_floating_ip.existing.ip_address  # Use ip_address here
+    ipv6_enabled = false
+  }
+
   ssh_keys = [
     data.hcloud_ssh_key.existing.name  # Use the existing SSH key
   ]
 }
 
-# Data block to retrieve the existing Floating IP by name
-data "hcloud_floating_ip" "existing" {
-  name = var.floating_ip_name  # Use the name of the existing Floating IP
-}
+
 
 # Assign the existing Floating IP to the server
 resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
