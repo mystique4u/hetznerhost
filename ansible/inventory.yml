@@ -1,7 +1,7 @@
 all:
   hosts:
     hetzner_vm:
-      ansible_host: "{{ floating_ip }}"  # Replace with Terraform output for Floating IP
+      ansible_host: "{{ public_ip }}"  # Reference the public_ip from Terraform
       ansible_user: root  # Assuming you are using root user
       ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_PRIVATE_KEY_FILE') }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

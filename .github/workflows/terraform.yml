@@ -25,7 +25,7 @@ jobs:
           hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
           ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
           ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
-          firewall_name = "firewall-1"  # Pass the firewall name here
+          firewall_name = "firewall-1"
           EOF
 
       - name: Terraform Init
@@ -43,17 +43,17 @@ jobs:
       - name: Get Terraform Output (Public IP)
         id: terraform_output
         run: |
-          output=$(terraform output -raw public_ip 2>/dev/null)
-          echo "Raw output: $output"
+          public_ip=$(terraform output -raw public_ip 2>/dev/null)
+          echo "Raw output: $public_ip"
 
-          if [ -z "$output" ]; then
+          if [ -z "$public_ip" ]; then
             echo "No output received from Terraform for public_ip."
             exit 1
           fi
 
-          public_ip=$output
           echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
+
 
   ansible:
     name: Configure VM with Ansible
@@ -72,14 +72,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+        env:
+          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
 
-      - name: Create Ansible Inventory
+      - name: Update Ansible Inventory with Public IP
         run: |
-          echo "[hetzner_vm]" > ansible/inventory.ini
-          echo "${{ needs.terraform.outputs.public_ip }}" >> ansible/inventory.ini
-          
+          sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/" ansible/inventory.yml
+        working-directory: ./ansible
+
       - name: Run Ansible Playbook
-        run: |
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+        run: ansible-playbook -i ansible/inventory.yml ansible/playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
