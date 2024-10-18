@@ -65,8 +65,14 @@ variable "ssh_key_name" {
   type        = string
 }
 
+
+variable "ssh_public_key" {
+  description = "Public SSH key content to use for access"
+  type        = string
+}
+
 resource "hcloud_ssh_key" "default" {
-  name       = "github-ssh-key"
+  name       = "workook"
   public_key = var.ssh_public_key
 }
 
