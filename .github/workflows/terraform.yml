@@ -43,11 +43,17 @@ jobs:
       - name: Get Terraform Output (Public IP)
         id: terraform_output
         run: |
+          # Retrieve the public IP from Terraform
           public_ip=$(terraform output -raw public_ip)
+          echo "Terraform output for public IP: $public_ip"
+
+          # Check if public_ip is empty
           if [ -z "$public_ip" ]; then
             echo "No public_ip received from Terraform."
             exit 1
           fi
+
+          # Save public_ip to GITHUB_ENV for subsequent steps
           echo "public_ip=$public_ip" >> $GITHUB_ENV
         working-directory: ./terraform
 
@@ -73,7 +79,7 @@ jobs:
 
       - name: Debug Public IP
         run: |
-          echo "Public IP: ${{ env.public_ip }}"
+          echo "Public IP: ${{ env.public_ip }}"  # This will print the public IP
         
 
       - name: Update Ansible Inventory with Public IP
