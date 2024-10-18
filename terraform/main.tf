@@ -41,9 +41,7 @@ resource "hcloud_server" "vm" {
     ipv6_enabled = false  # Disable IPv6
   }
 
-  ssh_keys = [
-    data.hcloud_ssh_key.existing.name  # Use the existing SSH key
-  ]
+  ssh_keys    = [hcloud_ssh_key.default.id]
 
   firewall_ids = [data.hcloud_firewall.existing.id]  # Attach the firewall by ID
 }
@@ -67,9 +65,9 @@ variable "ssh_key_name" {
   type        = string
 }
 
-variable "ssh_public_key" {
-  description = "Public SSH key content to use for access"
-  type        = string
+resource "hcloud_ssh_key" "default" {
+  name       = "github-ssh-key"
+  public_key = var.ssh_public_key
 }
 
 variable "firewall_name" {
