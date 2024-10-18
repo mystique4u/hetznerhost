@@ -24,6 +24,7 @@ jobs:
           hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
           ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
           ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
+          firewall_name = "firewall-1"  # Pass the firewall name here
           EOF
 
       - name: Terraform Init
@@ -42,7 +43,6 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
-      # NEW: Capture the public IPv4 address from the VM
       - name: Get Terraform Output (Public IP)
         id: terraform_output
         run: |
