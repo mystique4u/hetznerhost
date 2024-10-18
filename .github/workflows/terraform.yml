@@ -55,7 +55,6 @@ jobs:
           echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
-
   ansible:
     name: Configure VM with Ansible
     runs-on: ubuntu-latest
@@ -74,10 +73,13 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Run Ansible Playbook
+      - name: Create Ansible Inventory
         run: |
           echo "[hetzner_vm]" > ansible/inventory.ini
-          echo "${{ needs.terraform.outputs.public_ip }}" >> ansible/inventory.ini  # Use public_ip instead of floating_ip
+          echo "${{ needs.terraform.outputs.public_ip }}" >> ansible/inventory.ini
+          
+      - name: Run Ansible Playbook
+        run: |
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
