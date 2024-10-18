@@ -16,6 +16,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.4.0
+          terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TFC_TOKEN }}
 
       - name: Create terraform.auto.tfvars
@@ -42,14 +43,14 @@ jobs:
       - name: Get Terraform Output (Public IP)
         id: terraform_output
         run: |
-          output=$(terraform output -raw public_ip)
+          output=$(terraform output -raw public_ip 2>/dev/null)
           echo "Raw output: $output"
-          
+
           if [ -z "$output" ]; then
             echo "No output received from Terraform for public_ip."
             exit 1
           fi
-          
+
           public_ip=$output
           echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
