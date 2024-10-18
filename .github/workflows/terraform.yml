@@ -35,9 +35,6 @@ jobs:
         run: terraform plan
         working-directory: ./terraform
 
-      - name: Install jq
-        run: sudo apt-get install jq
-
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: ./terraform
@@ -52,6 +49,17 @@ jobs:
             exit 1
           fi
           public_ip=$(echo $output | jq -r .value)
+          echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
+
+          output=$(terraform output -json public_ip)
+          echo "Raw output: $output"
+
+          if [ -z "$output" ]; then
+            echo "No output received from Terraform for public_ip."
+            exit 1
+          fi
+          public_ip=$(echo $output | sed -e 's/^"//' -e 's/"$//')
+
           echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
