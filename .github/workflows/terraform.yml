@@ -77,10 +77,11 @@ jobs:
 
       - name: Update Ansible Inventory with Public IP
         run: |
-          sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/" ansible/inventory.yml
+          sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/" inventory.yml
         working-directory: ./ansible
 
       - name: Run Ansible Playbook
-        run: ansible-playbook -i ansible/inventory.yml ansible/playbook.yml
+        run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+        working-directory: ./ansible
