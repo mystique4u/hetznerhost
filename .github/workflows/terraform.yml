@@ -81,7 +81,7 @@ jobs:
         working-directory: ./ansible
 
       - name: Check Ansible Inventory
-        run: cat ansible/inventory.yml
+        run: cat inventory.yml
         working-directory: ./ansible
 
       - name: Run Ansible Playbook with Debugging
