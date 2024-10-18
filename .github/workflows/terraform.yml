@@ -1,8 +1,3 @@
-name: Deploy and Manage Hetzner VM with Ansible
-
-on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
-
 jobs:
   terraform:
     name: Terraform Apply
@@ -43,17 +38,13 @@ jobs:
       - name: Get Terraform Output (Public IP)
         id: terraform_output
         run: |
-          public_ip=$(terraform output -raw public_ip 2>/dev/null)
-          echo "Raw output: $public_ip"
-
+          public_ip=$(terraform output -raw public_ip)
           if [ -z "$public_ip" ]; then
-            echo "No output received from Terraform for public_ip."
+            echo "No public_ip received from Terraform."
             exit 1
           fi
-
-          echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
+          echo "public_ip=$public_ip" >> $GITHUB_ENV
         working-directory: ./terraform
-
 
   ansible:
     name: Configure VM with Ansible
@@ -75,9 +66,12 @@ jobs:
         env:
           ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
 
+      - name: Debug Public IP
+        run: echo "Public IP: ${{ env.public_ip }}"
+
       - name: Update Ansible Inventory with Public IP
         run: |
-          sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/g" inventory.yml
+          sed -i "s/{{ public_ip }}/${{ env.public_ip }}/g" inventory.yml
         working-directory: ./ansible
 
       - name: Check Ansible Inventory
