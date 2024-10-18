@@ -19,11 +19,6 @@ provider "hcloud" {
   token = var.hcloud_token  # Hetzner Cloud API token
 }
 
-# Data block to retrieve the existing Floating IP by name
-data "hcloud_floating_ip" "existing" {
-  name = var.floating_ip_name  # Use the name of the existing Floating IP
-}
-# SSH Key Resource - Ensure this key already exists in Hetzner Cloud
 # Data block to retrieve the existing SSH key
 data "hcloud_ssh_key" "existing" {
   name = var.ssh_key_name  # Use the name of the existing SSH key
@@ -37,9 +32,8 @@ resource "hcloud_server" "vm" {
   location    = "nbg1"  # Hetzner data center location (e.g., nbg1, fsn1)
 
   public_net {
-    ipv4_enabled = true
-    ipv4 = data.hcloud_floating_ip.existing.ip_address  # Use ip_address here
-    ipv6_enabled = false
+    ipv4_enabled = true  # Enable IPv4
+    ipv6_enabled = false  # Disable IPv6
   }
 
   ssh_keys = [
@@ -47,18 +41,11 @@ resource "hcloud_server" "vm" {
   ]
 }
 
-
-
-# Assign the existing Floating IP to the server
-resource "hcloud_floating_ip_assignment" "vm_floating_ip" {
-  floating_ip_id = data.hcloud_floating_ip.existing.id  # Get the ID from the data block
-  server_id      = hcloud_server.vm.id                    # Assign the Floating IP to this server
-}
-
-# Output the Floating IP Address
-output "floating_ip" {
-  description = "The floating IP address assigned to the VM"
-  value       = data.hcloud_floating_ip.existing.ip_address
+# Output the public IPv4 address of the created VM
+output "public_ip" {
+  description = "The public IPv4 address of the VM"
+  value       = hcloud_server.vm.ipv4_address
+  sensitive   = true  # Sensitive output, useful for security
 }
 
 # Variables
@@ -66,11 +53,6 @@ variable "hcloud_token" {
   description = "Hetzner Cloud API token"
   type        = string
   sensitive   = true
-}
-
-variable "floating_ip_name" {  # Renamed variable to represent the name
-  description = "Hetzner Cloud Floating IP name to assign"
-  type        = string  # This remains a string
 }
 
 variable "ssh_key_name" {
