@@ -19,17 +19,9 @@ provider "hcloud" {
   token = var.hcloud_token  # Hetzner Cloud API token
 }
 
-# Data block to retrieve the existing SSH key
+# Data block to retrieve the existing SSH key with the name "workook"
 data "hcloud_ssh_key" "existing" {
-  name = var.ssh_key_name  # Use the name of the existing SSH key
-}
-
-# Resource to create a new SSH key only if the existing one is not found
-resource "hcloud_ssh_key" "default" {
-  count = data.hcloud_ssh_key.existing.id == "" ? 1 : 0  # Create SSH key if not found
-
-  name       = "workook"
-  public_key = var.ssh_public_key
+  name = "workook"  # Name of the existing SSH key
 }
 
 # Data block to retrieve the existing firewall by name
@@ -49,8 +41,7 @@ resource "hcloud_server" "vm" {
     ipv6_enabled = false  # Disable IPv6
   }
 
-  # Use either the existing SSH key or the new one, with proper indexing
-  ssh_keys = length(data.hcloud_ssh_key.existing.id) == 0 ? [hcloud_ssh_key.default[0].id] : [data.hcloud_ssh_key.existing.id]
+  ssh_keys = [data.hcloud_ssh_key.existing.id]  # Use the existing SSH key named "workook"
 
   firewall_ids = [data.hcloud_firewall.existing.id]  # Attach the firewall by ID
 }
@@ -67,16 +58,6 @@ variable "hcloud_token" {
   description = "Hetzner Cloud API token"
   type        = string
   sensitive   = true
-}
-
-variable "ssh_key_name" {
-  description = "Name of the existing SSH key in Hetzner Cloud"
-  type        = string
-}
-
-variable "ssh_public_key" {
-  description = "Public SSH key content to use for access"
-  type        = string
 }
 
 variable "firewall_name" {
