@@ -24,6 +24,13 @@ data "hcloud_ssh_key" "existing" {
   name = var.ssh_key_name  # Use the name of the existing SSH key
 }
 
+# Resource to create a new SSH key only if the existing one is not found
+resource "hcloud_ssh_key" "default" {
+  count = length(data.hcloud_ssh_key.existing.id) == 0 ? 1 : 0  # Create only if not found
+  name       = var.ssh_key_name
+  public_key = var.ssh_public_key
+}
+
 # Data block to retrieve the existing firewall by name
 data "hcloud_firewall" "existing" {
   name = var.firewall_name  # Firewall name to attach
@@ -41,7 +48,8 @@ resource "hcloud_server" "vm" {
     ipv6_enabled = false  # Disable IPv6
   }
 
-  ssh_keys    = [hcloud_ssh_key.default.id]
+  # Use either the existing SSH key or the new one
+  ssh_keys = length(data.hcloud_ssh_key.existing.id) == 0 ? [hcloud_ssh_key.default.id] : [data.hcloud_ssh_key.existing.id]
 
   firewall_ids = [data.hcloud_firewall.existing.id]  # Attach the firewall by ID
 }
@@ -65,15 +73,9 @@ variable "ssh_key_name" {
   type        = string
 }
 
-
 variable "ssh_public_key" {
   description = "Public SSH key content to use for access"
   type        = string
-}
-
-resource "hcloud_ssh_key" "default" {
-  name       = "workook"
-  public_key = var.ssh_public_key
 }
 
 variable "firewall_name" {
