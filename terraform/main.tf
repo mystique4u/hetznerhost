@@ -48,8 +48,8 @@ resource "hcloud_server" "vm" {
     ipv6_enabled = false  # Disable IPv6
   }
 
-  # Use either the existing SSH key or the new one
-  ssh_keys = length(data.hcloud_ssh_key.existing.id) == 0 ? [hcloud_ssh_key.default.id] : [data.hcloud_ssh_key.existing.id]
+  # Use either the existing SSH key or the new one, with proper indexing
+  ssh_keys = length(data.hcloud_ssh_key.existing.id) == 0 ? [hcloud_ssh_key.default[0].id] : [data.hcloud_ssh_key.existing.id]
 
   firewall_ids = [data.hcloud_firewall.existing.id]  # Attach the firewall by ID
 }
