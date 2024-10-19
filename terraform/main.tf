@@ -26,8 +26,9 @@ data "hcloud_ssh_key" "existing" {
 
 # Resource to create a new SSH key only if the existing one is not found
 resource "hcloud_ssh_key" "default" {
-  count = length(data.hcloud_ssh_key.existing.id) == 0 ? 1 : 0  # Create only if not found
-  name       = var.ssh_key_name
+  count = data.hcloud_ssh_key.existing.id == "" ? 1 : 0  # Create SSH key if not found
+
+  name       = "workook"
   public_key = var.ssh_public_key
 }
 
