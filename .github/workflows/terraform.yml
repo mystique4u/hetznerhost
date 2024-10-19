@@ -84,7 +84,7 @@ jobs:
         working-directory: ./ansible
 
       - name: Run Ansible Playbook with Debugging
-        run: ansible-playbook -i inventory.yml playbook.yml -vvvv
+        run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         working-directory: ./ansible

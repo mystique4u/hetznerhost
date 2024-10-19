@@ -13,3 +13,5 @@
       apt:
         name: mc
         state: present
+#TODO
+#change ssh port to 42322 and restart ?
