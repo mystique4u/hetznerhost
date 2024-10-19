@@ -27,7 +27,6 @@ jobs:
           cat <<EOF > terraform/terraform.auto.tfvars
           hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
           ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
-          ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
           firewall_name = "firewall-1"
           EOF
 
@@ -90,11 +89,11 @@ jobs:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         working-directory: ./ansible
 
-  destroy_terraform:
+  destroy:
     name: Terraform Destroy
     runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'destroy'  # This ensures it only runs when manually triggered with "destroy"
-    
+    needs: terraform  # This makes sure it runs after the terraform job
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -111,7 +110,6 @@ jobs:
           cat <<EOF > terraform/terraform.auto.tfvars
           hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
           ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
-          ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
           firewall_name = "firewall-1"
           EOF
 
