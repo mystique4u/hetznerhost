@@ -84,7 +84,7 @@ jobs:
         working-directory: ./ansible
 
       - name: Run Ansible Playbook with Debugging
-        run: ansible-playbook -i inventory.yml playbook.yml
+        run: ansible-playbook -i inventory.yml playbook.yml -vvvv
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         working-directory: ./ansible
@@ -92,7 +92,6 @@ jobs:
   destroy:
     name: Terraform Destroy
     runs-on: ubuntu-latest
-    needs: terraform  # This makes sure it runs after the terraform job
 
     steps:
       - name: Checkout repository
