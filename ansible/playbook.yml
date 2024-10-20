@@ -1,5 +1,5 @@
 ---
-- name: Update OS and install Midnight Commander
+- name: Update OS and setup development environment
   hosts: all
   become: true  # Ensure that Ansible uses sudo
 
@@ -9,9 +9,69 @@
         update_cache: yes
         upgrade: dist
 
-    - name: Install Midnight Commander
+    - name: Install development tools (curl, wget, etc.)
       apt:
-        name: mc
+        name: "{{ item }}"
         state: present
-#TODO
-#change ssh port to 42322 and restart ?
+      loop:
+        - curl
+        - wget
+        - build-essential
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        - software-properties-common
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Install Neovim
+      apt:
+        name: neovim
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Add docker group
+      group:
+        name: docker
+        state: present
+
+    - name: Add the current user to the docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+
+    - name: Display Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    - name: Verify Docker Compose installation
+      command: docker-compose --version
+      register: docker_compose_version
+
+    - name: Display Docker Compose version
+      debug:
+        msg: "Docker Compose version: {{ docker_compose_version.stdout }}"
