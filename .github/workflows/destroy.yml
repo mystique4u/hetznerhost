@@ -1,0 +1,36 @@
+name: Destroy Hetzner VM
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  terraform:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.0
+          terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TFC_TOKEN }}
+
+      - name: Create terraform.auto.tfvars
+        run: |
+          cat <<EOF > terraform/terraform.auto.tfvars
+          hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
+          ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
+          firewall_name = "firewall-1"
+          EOF
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        working-directory: ./terraform
