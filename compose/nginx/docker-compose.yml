@@ -1,20 +1,29 @@
+version: '3'
+
 services:
-  # Nginx service
-  webserver:
+  nginx:
     image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./html:/usr/share/nginx/html  # Serve the index.html file
+      - ./conf:/etc/nginx/conf.d       # Nginx configuration
+      - /etc/letsencrypt:/etc/letsencrypt  # LetsEncrypt certificates
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
     ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - ./nginx/conf/:/etc/nginx/conf.d/:ro   # Nginx conf folder
-      - ./nginx/log/:/var/log/nginx:rw        # Nginx Log folder
-      - ./certbot/www/:/var/www/certbot/:ro   # Certbot challenge folder
-      - ./certbot/conf/:/etc/letsencrypt/:ro  # Certbot output folder
-  # Lets Encrypt service
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/www/:/var/www/certbot/:rw   # Certbot challenge folder
-      - ./certbot/conf/:/etc/letsencrypt/:rw  # Certbot output folder
+      - "80:80"    # HTTP
+      - "443:443"  # HTTPS
     depends_on:
-      - webserver # Need webserver to run
+      - certbot
+    networks:
+      - web
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h; done'"
+
+networks:
+  web:

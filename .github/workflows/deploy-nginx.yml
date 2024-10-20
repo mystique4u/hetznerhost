@@ -1,0 +1,41 @@
+# name: Deploy Nginx with Docker and Certbot
+
+# on:
+#   workflow_dispatch:  # Allows manual triggering of the workflow
+
+# jobs:
+#   deploy:
+#     name: Deploy Nginx
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       - name: Setup Docker
+#         uses: docker/setup-buildx-action@v2
+
+#       - name: Copy Nginx Docker Compose files to server
+#         run: |
+#           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           scp -r -o StrictHostKeyChecking=no ./compose/nginx user@your-server-ip:/home/user/nginx
+
+#       - name: Run Docker Compose Up
+#         run: |
+#           ssh -o StrictHostKeyChecking=no user@your-server-ip "cd /home/user/nginx && docker-compose up -d"
+
+#       - name: Obtain SSL Certificate with Certbot
+#         run: |
+#           ssh -o StrictHostKeyChecking=no user@your-server-ip "docker run -it --rm --name certbot \
+#             -v /etc/letsencrypt:/etc/letsencrypt \
+#             -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+#             certbot/certbot certonly \
+#             --webroot --webroot-path=/usr/share/nginx/html \
+#             --email your-email@example.com \
+#             --agree-tos --no-eff-email \
+#             -d itin.dev -d www.itin.dev"
+
+#       - name: Reload Nginx
+#         run: |
+#           ssh -o StrictHostKeyChecking=no user@your-server-ip "cd /home/user/nginx && docker-compose restart nginx"
