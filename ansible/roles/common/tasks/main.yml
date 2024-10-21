@@ -1,0 +1,19 @@
+---
+- name: Update all packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install development tools (curl, wget, etc.)
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - curl
+    - wget
+    - build-essential
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - software-properties-common
+    - mc
