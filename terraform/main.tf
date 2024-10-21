@@ -19,17 +19,12 @@ provider "hcloud" {
   token = var.hcloud_token  # Hetzner Cloud API token
 }
 
-# Data block to retrieve the existing SSH key using the provided name
-data "hcloud_ssh_key" "existing" {
-  name = var.ssh_key_name  # Use the variable ssh_key_name instead of hardcoding "workook"
-}
-
 # Data block to retrieve the existing firewall by name
 data "hcloud_firewall" "existing" {
   name = var.firewall_name  # Firewall name to attach
 }
 
-# Hetzner Cloud VM resource with firewall
+# Hetzner Cloud VM resource with firewall and cloud-init to create sudo user
 resource "hcloud_server" "vm" {
   name        = "github-action-vm"
   server_type = "cx22"
@@ -37,14 +32,23 @@ resource "hcloud_server" "vm" {
   location    = "nbg1"
 
   public_net {
-    ipv4_enabled = true  # Enable IPv4
-    ipv6_enabled = false  # Disable IPv6
+    ipv4_enabled = true
+    ipv6_enabled = false
   }
 
-  # Use the existing SSH key
-  ssh_keys = [data.hcloud_ssh_key.existing.id]  # Reference the SSH key dynamically
+  firewall_ids = [data.hcloud_firewall.existing.id]
 
-  firewall_ids = [data.hcloud_firewall.existing.id]  # Attach the firewall by ID
+  # Cloud-init script to create a new sudo user and inject SSH public key
+  user_data = <<-EOF
+    #cloud-config
+    users:
+      - name: ${var.sudo_user}  # New sudo user
+        groups: sudo
+        shell: /bin/bash
+        sudo: ['ALL=(ALL) NOPASSWD:ALL']
+        ssh_authorized_keys:
+          - ${var.ssh_public_key}  # Use the SSH public key directly from variable
+  EOF
 }
 
 # Output the public IPv4 address of the created VM
@@ -66,8 +70,12 @@ variable "firewall_name" {
   type        = string
 }
 
-# Added variable for SSH key name
-variable "ssh_key_name" {
-  description = "Name of the SSH key to use for VM access"
+variable "ssh_public_key" {
+  description = "Public SSH key for the sudo user"
+  type        = string
+}
+
+variable "sudo_user" {
+  description = "Public SSH key for the sudo user"
   type        = string
 }
