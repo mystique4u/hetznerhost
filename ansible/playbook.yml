@@ -21,6 +21,7 @@
         - gnupg
         - lsb-release
         - software-properties-common
+        - mc
 
     - name: Install Git
       apt:
