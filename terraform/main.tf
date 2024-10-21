@@ -47,7 +47,7 @@ resource "hcloud_server" "vm" {
         shell: /bin/bash
         sudo: ['ALL=(ALL) NOPASSWD:ALL']
         ssh_authorized_keys:
-          - ${var.ssh_public_key}  # Use the SSH public key directly from variable
+          - ${var.ssh_public_key}
   EOF
 }
 
