@@ -17,3 +17,13 @@
     - lsb-release
     - software-properties-common
     - mc
+
+- name: Create directories in the user's home
+  file:
+    path: "/home/{{ ansible_user }}/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - compose
+    - backups
+    - scripts
