@@ -1,0 +1,44 @@
+name: Configure Hetzner VM with Ansible
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  ansible:
+    name: Configure VM with Ansible
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible
+
+      - name: Add Private SSH Key for Ansible
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        env:
+          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+
+      - name: Update Ansible Inventory with Public IP
+        run: |
+          sed -i "s/{{ public_ip }}/${{ env.PUBLIC_IP }}/g" inventory.yml
+        working-directory: ./ansible
+
+      - name: Update Ansible Inventory with sudo user
+        run: |
+          sed -i "s/{{ sudo_user }}/${{ secrets.SUDO_USER }}/g" inventory.yml
+        working-directory: ./ansible
+
+      - name: Check Ansible Inventory
+        run: cat inventory.yml
+        working-directory: ./ansible
+
+      - name: Run Ansible Playbook
+        run: ansible-playbook -i inventory.yml playbook.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        working-directory: ./ansible
