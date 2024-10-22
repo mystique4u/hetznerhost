@@ -9,4 +9,4 @@
     - docker        # Docker and Docker Compose
 #    - nginx         # NGINX with multiple domain and Docker support
 #    - certbot       # Certbot for SSL certificates in Docker
-    - wireguard     # WireGuard VPN setup
+#    - wireguard     # WireGuard VPN setup
