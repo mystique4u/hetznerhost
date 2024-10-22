@@ -22,8 +22,11 @@
   file:
     path: "/home/{{ ansible_user }}/dev/{{ item }}"
     state: directory
+    owner: "{{ ansible_user }}"  # Ensure ansible_user owns the directory
+    group: "{{ ansible_user }}"  # Ensure the group is set to ansible_user
     mode: '0755'
   loop:
     - compose
     - backups
     - scripts
+    - db
