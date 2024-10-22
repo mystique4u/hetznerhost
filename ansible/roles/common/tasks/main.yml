@@ -20,7 +20,7 @@
 
 - name: Create directories in the user's home
   file:
-    path: "/home/{{ ansible_user }}/{{ item }}"
+    path: "/home/{{ ansible_user }}/dev/{{ item }}"
     state: directory
     mode: '0755'
   loop:
