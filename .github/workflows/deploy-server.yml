@@ -1,4 +1,4 @@
-name: Deploy and Manage Hetzner VM with Ansible
+name: Deploy Terraform and Ansible
 
 on:
   workflow_dispatch:  # Allows manual triggering of the workflow
@@ -90,4 +90,10 @@ jobs:
         run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          HCLOUD_TOKEN: "${{ secrets.HCLOUD_TOKEN }}"
+          SSH_KEY_NAME: "${{ secrets.SSH_KEY_NAME }}"
+          SSH_PUBLIC_KEY: "${{ secrets.SSH_PUBLIC_KEY }}"
+          SUDO_USER: "${{ secrets.SUDO_USER }}"
+          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
+          TFC_TOKEN: "${{ secrets.TFC_TOKEN }}"
         working-directory: ./ansible

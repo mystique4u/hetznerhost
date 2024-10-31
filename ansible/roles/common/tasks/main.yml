@@ -30,3 +30,18 @@
     - backups
     - scripts
     - db
+    - secrets
+
+- name: Create secrets file
+  copy:
+    content: |
+      HCLOUD_TOKEN={{ lookup('env', 'HCLOUD_TOKEN') }}
+      SSH_KEY_NAME={{ lookup('env', 'SSH_KEY_NAME') }}
+      SSH_PUBLIC_KEY={{ lookup('env', 'SSH_PUBLIC_KEY') }}
+      SUDO_USER={{ lookup('env', 'SUDO_USER') }}
+      SSH_PRIVATE_KEY={{ lookup('env', 'SSH_PRIVATE_KEY') }}
+      TFC_TOKEN={{ lookup('env', 'TFC_TOKEN') }}
+    dest: "/home/{{ ansible_user }}/dev/secrets/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
