@@ -161,4 +161,5 @@ jobs:
         run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          COMPOSE_ENV: ${{ secrets.COMPOSE_ENV }}
         working-directory: ./ansible
