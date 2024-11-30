@@ -84,14 +84,8 @@ jobs:
             HETZNER_API="https://dns.hetzner.com/api/v1"
             API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
             SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
+            ZONE_ID="${{ secrets.DNS_ZONE }}"
             
-            # Get Zone ID for the domain
-            ZONE_ID=$(curl -s -X GET "$HETZNER_API/zones" -H "Auth-API-Token: $API_TOKEN" | jq -r ".zones[] | select(.name == \"$DOMAIN\") | .id")
-            
-            if [ -z "$ZONE_ID" ]; then
-              echo "Domain $DOMAIN does not have a zone. Skipping..."
-              continue
-            fi
 
             # Check if the A record already exists for the domain
             EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$DOMAIN\" and .type == \"A\")")
