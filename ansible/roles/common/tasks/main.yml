@@ -93,19 +93,18 @@
     group: "{{ ansible_user }}"
     mode: '0755'
 
-# Copy the iRedMail Docker configuration file
 - name: Create iRedMail Docker configuration file
   copy:
-    dest: "/home/{{ ansible_user }}/dev/compose/mailserver/iredmail-docker.conf"
     content: |
       HOSTNAME=mail.itin.dev
       FIRST_MAIL_DOMAIN=itin.dev
       FIRST_MAIL_DOMAIN_ADMIN_PASSWORD=my-scrt-password
       MLMMJADMIN_API_TOKEN="{{ lookup('random', 32, chars='ascii_letters,digits') }}"
       ROUNDCUBE_DES_KEY="{{ lookup('random', 24, chars='ascii_letters,digits') }}"
-  owner: "{{ ansible_user }}"
-  group: "{{ ansible_user }}"
-  mode: '0644'
+    dest: "/home/{{ ansible_user }}/dev/compose/mailserver/iredmail-docker.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
 
 # Create the .env file for secrets
 - name: Create secrets file
