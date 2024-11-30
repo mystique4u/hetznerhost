@@ -69,45 +69,55 @@ jobs:
           # Find all domain config files (domain.name.conf) in the domains folder
           DOMAIN_FILES=$(find ./compose/nginx/config/domains -type f -name "*.conf")
           echo "Found domain config files: $DOMAIN_FILES"
+          
           # Extract domain names from the config files (assuming the domain is in the filename)
           DOMAINS=$(echo "$DOMAIN_FILES" | sed -E 's/compose\/nginx\/config\/domains\/(.*)\.conf/\1/')
           echo "Domains to check and create: $DOMAINS"
+          
+          # Write the domains to a file for further processing
           echo "$DOMAINS" > domains.txt
         working-directory: ./  # Set working directory to root (or where the domains folder exists)
 
       - name: Check and create domains using Hetzner API
         run: |
+          echo "Starting domain management process..."
           while read DOMAIN; do
-            echo "Processing domain: $DOMAIN"
+            # Clean up the domain name to remove './' if present
+            CLEANED_DOMAIN=$(echo "$DOMAIN" | sed 's/^\.\///')
+            
+            echo "Processing domain: $CLEANED_DOMAIN"
 
             # API endpoint and token for Hetzner DNS
             HETZNER_API="https://dns.hetzner.com/api/v1"
             API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
             SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
             ZONE_ID="${{ secrets.DNS_ZONE }}"
-            
+
+            echo "API Token: $API_TOKEN"
+            echo "Zone ID: $ZONE_ID"
+            echo "Server IP: $SERVER_IP"
 
             # Check if the A record already exists for the domain
-            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$DOMAIN\" and .type == \"A\")")
+            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$CLEANED_DOMAIN\" and .type == \"A\")")
 
             if [ -z "$EXISTING_RECORD" ]; then
-              echo "Domain $DOMAIN does not have an A record. Creating it..."
+              echo "Domain $CLEANED_DOMAIN does not have an A record. Creating it..."
               
               # Create the new A record for the domain
               CREATE_RECORD_RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
                 -H "Content-Type: application/json" \
                 -H "Auth-API-Token: $API_TOKEN" \
-                -d $'{
-                  "value": "'$SERVER_IP'",  # Replace with the correct IP address
-                  "ttl": 86400,
-                  "type": "A",
-                  "name": "'$DOMAIN'",
-                  "zone_id": "'$ZONE_ID'"
-                }')
+                -d "{
+                  \"value\": \"$SERVER_IP\",
+                  \"ttl\": 86400,
+                  \"type\": \"A\",
+                  \"name\": \"$CLEANED_DOMAIN\",
+                  \"zone_id\": \"$ZONE_ID\"
+                }")
 
-              echo "A record for domain $DOMAIN created successfully"
+              echo "A record for domain $CLEANED_DOMAIN created successfully"
             else
-              echo "A record for domain $DOMAIN already exists. Skipping creation."
+              echo "A record for domain $CLEANED_DOMAIN already exists. Skipping creation."
             fi
           done < domains.txt
         working-directory: ./  # Set working directory to root (or where the domains folder exists)
