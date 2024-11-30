@@ -55,7 +55,7 @@ jobs:
   manage_domains:
     name: Manage Domains with Hetzner API
     runs-on: ubuntu-latest
-    needs: terraform  # Wait for the Terraform job to complete
+    needs: ansible  # Wait for the Terraform job to complete
 
     steps:
       - name: Checkout repository

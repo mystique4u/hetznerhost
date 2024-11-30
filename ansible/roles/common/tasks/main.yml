@@ -92,6 +92,9 @@
     mode: push
     recursive: true
 
+
+# TODO IF NOT FIRST RUN AND SOME file are exists - remove some lines
+
 # Create the .env file for secrets
 - name: Create secrets file
   copy:
