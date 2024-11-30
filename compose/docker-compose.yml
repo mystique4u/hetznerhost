@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    volumes:
+      - ./nginx/config:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/webroot:/var/www/certbot
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - certbot
+      - vaultwarden
+      - wireguard
+      - mailserver
+    environment:
+      - TZ=${TZ}
+    networks:
+      - main-net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    restart: unless-stopped
+    volumes:
+      - ./nginx/config:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/webroot:/var/www/certbot
+    networks:
+      - main-net
+    command: >
+      certonly --webroot
+      --webroot-path=/var/www/certbot
+      --agree-tos
+      --email your-email@example.com
+      --noninteractive
+      --expand
+      --keep-until-expiring
+      -d example.com -d www.example.com
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    volumes:
+      - ./vaultwarden/config:/data
+    environment:
+      - WEB_VAULT_ENABLED=${VAULTWARDEN_WEB_VAULT_ENABLED}
+      - TZ=${TZ}
+    networks:
+      - main-net
+
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=${WIREGUARD_PUID}
+      - PGID=${WIREGUARD_PGID}
+      - TZ=${TZ}
+    volumes:
+      - ./wireguard/config:/config
+    ports:
+      - "51820:51820/udp"
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      - main-net
+
+  mailserver:
+    image: iredmail/mariadb:stable
+    container_name: mailserver
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./mailserver/data/backup-mysql:/var/vmail/backup/mysql
+      - ./mailserver/data/mailboxes:/var/vmail/vmail1
+      - ./mailserver/data/mlmmj:/var/vmail/mlmmj
+      - ./mailserver/data/mlmmj-archive:/var/vmail/mlmmj-archive
+      - ./mailserver/data/imapsieve_copy:/var/vmail/imapsieve_copy
+      - ./mailserver/data/custom:/opt/iredmail/custom
+      - ./mailserver/data/ssl:/opt/iredmail/ssl
+      - ./mailserver/data/mysql:/var/lib/mysql
+      - ./mailserver/data/clamav:/var/lib/clamav
+      - ./mailserver/data/sa_rules:/var/lib/spamassassin
+      - ./mailserver/data/postfix_queue:/var/spool/postfix
+    ports:
+      - "110:110"
+      - "995:995"
+      - "143:143"
+      - "993:993"
+      - "25:25"
+      - "465:465"
+      - "587:587"
+    networks:
+      - main-net
+
+networks:
+  main-net:
+    driver: bridge
