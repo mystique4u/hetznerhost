@@ -7,6 +7,3 @@
     - common        # OS updates and base tools
     - devtools      # Dev tools like Git, Neovim
     - docker        # Docker and Docker Compose
-#    - nginx         # NGINX with multiple domain and Docker support
-#    - certbot       # Certbot for SSL certificates in Docker
-#    - wireguard     # WireGuard VPN setup

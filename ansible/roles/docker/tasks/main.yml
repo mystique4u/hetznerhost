@@ -7,7 +7,7 @@
 - name: Enable and start Docker service
   systemd:
     name: docker
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Install Docker Compose
@@ -25,8 +25,8 @@
   user:
     name: "{{ ansible_user }}"
     groups: docker
-    append: yes
-
+    append: true
+    
 - name: Verify Docker installation
   command: docker --version
   register: docker_version
