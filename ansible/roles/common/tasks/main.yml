@@ -84,27 +84,13 @@
     - compose/mysql/config
     - compose/mysql/data
 
-# Copy a default nginx.conf template (optional)
-- name: Copy Nginx default configuration
-  copy:
-    src: files/nginx/nginx.conf
-    dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/nginx.conf"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0755'
-
-- name: Create iRedMail Docker configuration file
-  copy:
-    content: |
-      HOSTNAME=mail.itin.dev
-      FIRST_MAIL_DOMAIN=itin.dev
-      FIRST_MAIL_DOMAIN_ADMIN_PASSWORD=my-scrt-password
-      MLMMJADMIN_API_TOKEN="{{ lookup('random', 32, chars='ascii_letters,digits') }}"
-      ROUNDCUBE_DES_KEY="{{ lookup('random', 24, chars='ascii_letters,digits') }}"
-    dest: "/home/{{ ansible_user }}/dev/compose/mailserver/iredmail-docker.conf"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0644'
+# Copy the entire compose directory recursively from the repository to the server
+- name: Copy entire compose directory to the server
+  synchronize:
+    src: ../../../../compose/   # This is the source directory in the repo
+    dest: "/home/{{ ansible_user }}/dev/compose/"
+    mode: push
+    recursive: true
 
 # Create the .env file for secrets
 - name: Create secrets file
@@ -115,17 +101,6 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0755'
-
-
-# Copy template configuration for nginx virtual hosts
-- name: Copy template for Nginx virtual host configuration
-  copy:
-    src: files/nginx/template.conf
-    dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/template.conf"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0755'
-
 
 # - name: Create secrets file
 #   copy:

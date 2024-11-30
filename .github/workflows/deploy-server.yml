@@ -71,7 +71,8 @@ jobs:
           echo "Found domain config files: $DOMAIN_FILES"
           
           # Extract domain names from the config files (assuming the domain is in the filename)
-          DOMAINS=$(echo "$DOMAIN_FILES" | sed -E 's/compose\/nginx\/config\/domains\/(.*)\.conf/\1/')
+          # Correctly remove the .conf extension to get only the domain name
+          DOMAINS=$(echo "$DOMAIN_FILES" | sed -E 's|^./compose/nginx/config/domains/(.*)\.conf|\1|')
           echo "Domains to check and create: $DOMAINS"
           
           # Write the domains to a file for further processing
@@ -82,7 +83,7 @@ jobs:
         run: |
           echo "Starting domain management process..."
           while read DOMAIN; do
-            # Clean up the domain name to remove './' if present
+            # Clean up the domain name to ensure it's in the right format
             CLEANED_DOMAIN=$(echo "$DOMAIN" | sed 's/^\.\///')
             
             echo "Processing domain: $CLEANED_DOMAIN"

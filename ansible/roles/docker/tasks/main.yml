@@ -26,7 +26,7 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: true
-    
+
 - name: Verify Docker installation
   command: docker --version
   register: docker_version
