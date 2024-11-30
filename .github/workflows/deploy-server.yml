@@ -126,7 +126,7 @@ jobs:
   ansible:
     name: Configure VM with Ansible
     runs-on: ubuntu-latest
-    needs: manage_domains
+    needs: terraform
 
     steps:
       - name: Checkout repository
