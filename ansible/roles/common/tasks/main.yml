@@ -1,136 +1,131 @@
 ---
-- name: Ensure system is up to date and configure the environment
-  hosts: all
-  become: true
+# Update all packages
+- name: Update all packages
+  apt:
+    update_cache: true
+    upgrade: dist
 
-  tasks:
-    # Update all packages
-    - name: Update all packages
-      apt:
-        update_cache: true
-        upgrade: dist
+# Install required packages
+- name: Install required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - curl
+    - wget
+    - build-essential
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - software-properties-common
+    - mc
 
-    # Install required packages
-    - name: Install required packages
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - curl
-        - wget
-        - build-essential
-        - ca-certificates
-        - gnupg
-        - lsb-release
-        - software-properties-common
-        - mc
+# Enable IP forwarding for WireGuard VPN
+- name: Enable IP forwarding for WireGuard VPN
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: true
 
-    # Enable IP forwarding for WireGuard VPN
-    - name: Enable IP forwarding for WireGuard VPN
-      sysctl:
-        name: net.ipv4.ip_forward
-        value: '1'
-        state: present
-        reload: yes
+- name: Ensure IP forwarding is persistent
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: "^net.ipv4.ip_forward"
+    line: "net.ipv4.ip_forward=1"
+    state: present
 
-    - name: Ensure IP forwarding is persistent
-      lineinfile:
-        path: /etc/sysctl.conf
-        regexp: "^net.ipv4.ip_forward"
-        line: "net.ipv4.ip_forward=1"
-        state: present
+# Configure UFW firewall rules
+- name: Allow necessary ports through the firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: "{{ 'udp' if item == '51820' else 'tcp' }}"
+  loop:
+    - 80    # HTTP
+    - 443   # HTTPS
+    - 8080  # phpMyAdmin
+    - 51820 # WireGuard VPN
+    - 110   # POP3
+    - 995   # POP3 Secure
+    - 143   # IMAP
+    - 993   # IMAP Secure
+    - 25    # SMTP
+    - 465   # SMTP Secure
+    - 587   # Submission
 
-    # Configure UFW firewall rules
-    - name: Allow necessary ports through the firewall
-      ufw:
-        rule: allow
-        port: "{{ item }}"
-        proto: "{{ 'udp' if item == '51820' else 'tcp' }}"
-      loop:
-        - 80    # HTTP
-        - 443   # HTTPS
-        - 8080  # phpMyAdmin
-        - 51820 # WireGuard VPN
-        - 110   # POP3
-        - 995   # POP3 Secure
-        - 143   # IMAP
-        - 993   # IMAP Secure
-        - 25    # SMTP
-        - 465   # SMTP Secure
-        - 587   # Submission
+# Create folder structure for Docker Compose
+- name: Create folder structure for Docker Compose
+  file:
+    path: "/home/{{ ansible_user }}/dev/{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - compose
+    - compose/nginx/config
+    - compose/nginx/logs
+    - compose/nginx/certs
+    - compose/nginx/webroot
+    - compose/vaultwarden/config
+    - compose/wireguard/config
+    - compose/mailserver/data/backup-mysql
+    - compose/mailserver/data/clamav
+    - compose/mailserver/data/custom
+    - compose/mailserver/data/imapsieve_copy
+    - compose/mailserver/data/mailboxes
+    - compose/mailserver/data/mlmmj
+    - compose/mailserver/data/mlmmj-archive
+    - compose/mailserver/data/mysql
+    - compose/mailserver/data/postfix_queue
+    - compose/mailserver/data/sa_rules
+    - compose/mailserver/data/ssl
+    - compose/mysql/config
+    - compose/mysql/data
 
-    # Create folder structure for Docker Compose
-    - name: Create folder structure for Docker Compose
-      file:
-        path: "/home/{{ ansible_user }}/dev/{{ item }}"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0755'
-      loop:
-        - compose
-        - compose/nginx/config
-        - compose/nginx/logs
-        - compose/nginx/certs
-        - compose/nginx/webroot
-        - compose/vaultwarden/config
-        - compose/wireguard/config
-        - compose/mailserver/data/backup-mysql
-        - compose/mailserver/data/clamav
-        - compose/mailserver/data/custom
-        - compose/mailserver/data/imapsieve_copy
-        - compose/mailserver/data/mailboxes
-        - compose/mailserver/data/mlmmj
-        - compose/mailserver/data/mlmmj-archive
-        - compose/mailserver/data/mysql
-        - compose/mailserver/data/postfix_queue
-        - compose/mailserver/data/sa_rules
-        - compose/mailserver/data/ssl
-        - compose/mysql/config
-        - compose/mysql/data
+# Copy a default nginx.conf template (optional)
+- name: Copy Nginx default configuration
+  copy:
+    src: files/nginx/nginx.conf
+    dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/nginx.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
 
-    # Copy a default nginx.conf template (optional)
-    - name: Copy Nginx default configuration
-      copy:
-        src: files/nginx/nginx.conf
-        dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/nginx.conf"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0755'
+# Copy the iRedMail Docker configuration file
+- name: Create iRedMail Docker configuration file
+  copy:
+    dest: "/home/{{ ansible_user }}/dev/compose/mailserver/iredmail-docker.conf"
+    content: |
+      HOSTNAME=mail.itin.dev
+      FIRST_MAIL_DOMAIN=itin.dev
+      FIRST_MAIL_DOMAIN_ADMIN_PASSWORD=my-scrt-password
+      MLMMJADMIN_API_TOKEN="{{ lookup('random', 32, chars='ascii_letters,digits') }}"
+      ROUNDCUBE_DES_KEY="{{ lookup('random', 24, chars='ascii_letters,digits') }}"
+  owner: "{{ ansible_user }}"
+  group: "{{ ansible_user }}"
+  mode: '0644'
 
-    # Copy the iRedMail Docker configuration file
-    - name: Create iRedMail Docker configuration file
-      copy:
-        dest: "/home/{{ ansible_user }}/dev/compose/mailserver/iredmail-docker.conf"
-        content: |
-          HOSTNAME=mail.itin.dev
-          FIRST_MAIL_DOMAIN=itin.dev
-          FIRST_MAIL_DOMAIN_ADMIN_PASSWORD=my-scrt-password
-          MLMMJADMIN_API_TOKEN={{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}
-          ROUNDCUBE_DES_KEY={{ lookup('password', '/dev/null chars=ascii_letters,digits length=24') }}
-      owner: "{{ ansible_user }}"
-      group: "{{ ansible_user }}"
-      mode: '0755'
-
-    # Create the .env file for secrets
-    - name: Create secrets file
-      copy:
-        content: |
-          {{ lookup('env', 'COMPOSE_ENV') }}
-        dest: "/home/{{ ansible_user }}/dev/compose/.env"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0755'
+# Create the .env file for secrets
+- name: Create secrets file
+  copy:
+    content: |
+      {{ lookup('env', 'COMPOSE_ENV') }}
+    dest: "/home/{{ ansible_user }}/dev/compose/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
 
 
-    # Copy template configuration for nginx virtual hosts
-    - name: Copy template for Nginx virtual host configuration
-      copy:
-        src: files/nginx/template.conf
-        dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/template.conf"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0755'
+# Copy template configuration for nginx virtual hosts
+- name: Copy template for Nginx virtual host configuration
+  copy:
+    src: files/nginx/template.conf
+    dest: "/home/{{ ansible_user }}/dev/compose/nginx/config/template.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
 
 
 # - name: Create secrets file
