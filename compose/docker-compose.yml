@@ -6,19 +6,14 @@ services:
     container_name: nginx
     restart: always
     volumes:
-      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf  # Explicitly mount nginx.conf
-      - ./nginx/config:/etc/nginx/conf.d  # Mount the rest of the config files
-      - ./nginx/logs:/var/log/nginx
+      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/domains:/etc/nginx/domains
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
+      - ./nginx/logs:/var/log/nginx
     ports:
       - "80:80"
       - "443:443"
-    depends_on:
-      - certbot
-      - vaultwarden
-      - wireguard
-      - mailserver
     environment:
       - TZ=${TZ}
     networks:
@@ -29,7 +24,6 @@ services:
     container_name: certbot
     restart: unless-stopped
     volumes:
-      - ./nginx/config:/etc/nginx/conf.d  # This stays as is to allow Certbot to use the same config directory
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
     networks:
@@ -42,7 +36,19 @@ services:
       --noninteractive
       --expand
       --keep-until-expiring
-      -d mail.itin.dev -d vault.itin.dev
+      -d mail.itin.dev -d vault.itin.dev -d docker.itin.dev
+
+  cron:
+    image: alpine:latest
+    container_name: certbot-cron
+    restart: unless-stopped
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/webroot:/var/www/certbot
+      - ./scripts/issue-certificates.sh:/scripts/issue-certificates.sh
+    entrypoint: /bin/sh -c "echo '0 0 * * * /scripts/issue-certificates.sh' > /etc/crontabs/root && crond -f"
+    networks:
+      - main-net
 
   vaultwarden:
     image: vaultwarden/server:latest
@@ -103,6 +109,20 @@ services:
       - "587:587"
     networks:
       - main-net
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - 9443:9443
+    volumes:
+        - portainer-data:/data
+        - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - main-net
+
+volumes:
+  portainer-data:
 
 networks:
   main-net:

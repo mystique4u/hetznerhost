@@ -105,6 +105,8 @@
     group: "{{ ansible_user }}"
     mode: '0755'
 
+#Run docker compose
+
 # - name: Create secrets file
 #   copy:
 #     content: |

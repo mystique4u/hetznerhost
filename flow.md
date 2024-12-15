@@ -58,7 +58,7 @@ Configure VM with Ansible:
     - Add Public IP.
     - Add `sudo` user.
 4. Run Ansible Playbook.
-5. Pass `COMPOSE_ENV`.
+5. Pass `COMPOSE_ENV`to compose directory as .env file
 
 ---
 
