@@ -92,7 +92,7 @@ Manage domains with Hetzner API based on Nginx configurations:
 6. Create folder structure for Docker Compose.
 7. Copy the entire Compose directory to the server.
 8. **TODO**: If not the first run and some files exist, remove specific lines.
-9. Create secrets file.
+9. Create secrets .env on host file.
 
 ##### DevTools Tasks
 1. Install Git.
@@ -122,7 +122,7 @@ Manage domains with Hetzner API based on Nginx configurations:
 - **Git**
 
 #### Docker Compose Services
-The following services are installed and managed via Docker Compose:
+The following services are installed and managed via Docker Compose(plan):
 
 - **Vaultwarden** (self-hosted password manager) - [Tutorial](https://github.com/vineethmn/vaultwarden-docker-compose/tree/main)
 - **Nginx** (web server) - [Tutorial](https://xiahua.pages.dev/nginx-certbot-docker/)
@@ -153,7 +153,7 @@ The following secrets need to be created and set as GitHub Secrets:
 ## Prerequisites
 
 - A Hetzner Cloud account with API access.
-- Terraform installed locally.
+- Terraform installed locally(optional for testing).
 - Ansible installed locally (optional for manual provisioning).
 - SSH keypair created and configured.
 
