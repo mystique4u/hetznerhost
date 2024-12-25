@@ -92,6 +92,18 @@
     mode: push
     recursive: true
 
+- name: Set executable permissions for all .sh scripts in the scripts folder
+  ansible.builtin.find:
+    paths: "/home/{{ ansible_user }}/dev/compose/scripts/"
+    patterns: "*.sh"
+  register: sh_files
+
+- name: Change file permissions to executable
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: 'u+x'
+  with_items: "{{ sh_files.files }}"
+  when: sh_files.matched > 0
 
 # TODO IF NOT FIRST RUN AND SOME file are exists - remove some lines
 

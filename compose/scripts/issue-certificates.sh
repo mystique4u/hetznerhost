@@ -1,29 +1,49 @@
 #!/bin/bash
+set -e
 
-DOMAINS=()
+# Directories and file paths
+DOMAINS_DIR="/etc/nginx/conf.d/domains"
+CERTBOT_WEBROOT="/var/www/certbot"
+RELOAD_SCRIPT="/scripts/reload-nginx.sh"
+CRON_FILE="/etc/crontabs/root"
 
-# Parse domain configuration files
-for domain_config in /etc/nginx/config/domains/*.conf; do
-    domain=$(basename "$domain_config" .conf)
-    DOMAINS+=("-d $domain")
+# Function to reload Nginx
+reload_nginx() {
+    if [ -x "$RELOAD_SCRIPT" ]; then
+        echo "Reloading Nginx..."
+        $RELOAD_SCRIPT
+    else
+        echo "Reload script $RELOAD_SCRIPT not found or not executable."
+    fi
+}
+
+# Loop through all domain configuration files
+for domain_config in ${DOMAINS_DIR}/*.conf; do
+    # Extract the server_name(s) from the configuration
+    DOMAINS=$(grep -oP 'server_name\s+\K[^;]+' "$domain_config" | tr '\n' ' ')
+    if [ -z "$DOMAINS" ]; then
+        echo "No domains found in $domain_config. Skipping."
+        continue
+    fi
+
+    echo "Issuing certificates for domains: $DOMAINS"
+
+    # Run Certbot to issue certificates
+    certbot certonly --webroot -w $CERTBOT_WEBROOT \
+        --agree-tos --email mystique4u@gmail.com --noninteractive \
+        --expand --keep-until-expiring -d $DOMAINS
 done
 
-# Start Nginx in HTTP-only mode
-echo "Starting Nginx in HTTP-only mode for Certbot validation..."
-nginx -c /etc/nginx/nginx-http.conf
+echo "Certificate issuance complete."
 
-# Wait for Nginx to start
-sleep 5
+# Reload Nginx after issuing certificates
+reload_nginx
 
-# Request certificates for all domains
-certbot certonly --webroot --webroot-path=/var/www/certbot \
-  --agree-tos --email your-email@example.com --noninteractive --expand \
-  "${DOMAINS[@]}"
-
-# Replace HTTP-only configuration with HTTPS-enabled configuration
-echo "Switching to HTTPS configuration..."
-nginx -s stop
-nginx -c /etc/nginx/nginx.conf
-
-# Reload Nginx
-/scripts/reload-nginx.sh
+# Ensure a cron job exists for renewing certificates
+if [ ! -f "$CRON_FILE" ]; then
+    echo "Setting up cron job for certificate renewal."
+    echo "0 0 * * * /scripts/issue-certificates.sh" > "$CRON_FILE"
+    chmod 644 "$CRON_FILE"
+else
+    echo "Cron job for certificate renewal already exists."
+fi

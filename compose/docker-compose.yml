@@ -16,8 +16,8 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - certbot
       - python-app
+      - certbot
     networks:
       - main-net
 
@@ -28,8 +28,9 @@ services:
     volumes:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
-      - ./nginx/config/domains:/etc/nginx/config/domains
-    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && sleep infinity'"
+      - ./nginx/config/domains:/etc/nginx/conf.d/domains
+      - ./scripts:/scripts
+    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && crond -f'"
     networks:
       - main-net
 
@@ -41,7 +42,7 @@ services:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
       - ./scripts:/scripts
-    entrypoint: /bin/sh -c "echo '0 0 * * * /scripts/issue-certificates.sh' > /etc/crontabs/root && crond -f"
+    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && crond -f'"
 
   python-app:
     build:
