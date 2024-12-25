@@ -98,10 +98,10 @@
     patterns: "*.sh"
   register: sh_files
 
-- name: Change file permissions to executable
+- name: Change file permissions to readable and executable for all users
   ansible.builtin.file:
     path: "{{ item.path }}"
-    mode: 'u+x'
+    mode: '755'  # Set rwxr-xr-x permissions (read, write, execute for owner, read, execute for group and others)
   with_items: "{{ sh_files.files }}"
   when: sh_files.matched > 0
 

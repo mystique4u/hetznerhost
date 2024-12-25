@@ -15,9 +15,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+
     depends_on:
       - python-app
-      - certbot
     networks:
       - main-net
 
@@ -25,12 +25,14 @@ services:
     image: certbot/certbot:latest
     container_name: certbot
     restart: unless-stopped
+    depends_on:
+      - nginx
     volumes:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
       - ./nginx/config/domains:/etc/nginx/conf.d/domains
       - ./scripts:/scripts
-    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && crond -f'"
+    entrypoint: ["/bin/sh", "-c", "chmod +x /scripts/*.sh && /scripts/issue-certificates.sh 2>&1"]
     networks:
       - main-net
 
@@ -42,7 +44,9 @@ services:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
       - ./scripts:/scripts
-    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && crond -f'"
+    entrypoint: "/bin/sh -c 'crond -f'"  # Just start the cron daemon, not the cert issuing script
+    networks:
+      - main-net
 
   python-app:
     build:
