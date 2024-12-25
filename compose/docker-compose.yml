@@ -6,16 +6,18 @@ services:
     container_name: nginx
     restart: always
     volumes:
+      - ./nginx/config/nginx-http.conf:/etc/nginx/nginx-http.conf
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/domains:/etc/nginx/domains
+      - ./nginx/config/domains:/etc/nginx/config/domains
       - ./nginx/certs:/etc/letsencrypt
-      - ./nginx/webroot:/var/www/certbot
       - ./nginx/logs:/var/log/nginx
+      - ./nginx/webroot:/var/www/certbot
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - TZ=${TZ}
+    depends_on:
+      - certbot
+      - python-app
     networks:
       - main-net
 
@@ -26,17 +28,10 @@ services:
     volumes:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
+      - ./nginx/config/domains:/etc/nginx/config/domains
+    entrypoint: "/bin/sh -c '/scripts/issue-certificates.sh && sleep infinity'"
     networks:
       - main-net
-    command: >
-      certonly --webroot
-      --webroot-path=/var/www/certbot
-      --agree-tos
-      --email mystique4u@gmail.com
-      --noninteractive
-      --expand
-      --keep-until-expiring
-      -d mail.itin.dev -d vault.itin.dev -d docker.itin.dev
 
   cron:
     image: alpine:latest
@@ -45,84 +40,93 @@ services:
     volumes:
       - ./nginx/certs:/etc/letsencrypt
       - ./nginx/webroot:/var/www/certbot
-      - ./scripts/issue-certificates.sh:/scripts/issue-certificates.sh
+      - ./scripts:/scripts
     entrypoint: /bin/sh -c "echo '0 0 * * * /scripts/issue-certificates.sh' > /etc/crontabs/root && crond -f"
-    networks:
-      - main-net
 
-  vaultwarden:
-    image: vaultwarden/server:latest
-    container_name: vaultwarden
+  python-app:
+    build:
+      context: ./apps/app
+      dockerfile: Dockerfile
+    container_name: python-app
     restart: always
-    volumes:
-      - ./vaultwarden/config:/data
-    environment:
-      - WEB_VAULT_ENABLED=${VAULTWARDEN_WEB_VAULT_ENABLED}
-      - TZ=${TZ}
-    networks:
-      - main-net
-
-  wireguard:
-    image: linuxserver/wireguard:latest
-    container_name: wireguard
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    environment:
-      - PUID=${WIREGUARD_PUID}
-      - PGID=${WIREGUARD_PGID}
-      - TZ=${TZ}
-    volumes:
-      - ./wireguard/config:/config
     ports:
-      - "51820:51820/udp"
-    sysctls:
-      - net.ipv4.ip_forward=1
+      - "5000:5000"
     networks:
       - main-net
 
-  mailserver:
-    image: iredmail/mariadb:stable
-    container_name: mailserver
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - ./mailserver/data/backup-mysql:/var/vmail/backup/mysql
-      - ./mailserver/data/mailboxes:/var/vmail/vmail1
-      - ./mailserver/data/mlmmj:/var/vmail/mlmmj
-      - ./mailserver/data/mlmmj-archive:/var/vmail/mlmmj-archive
-      - ./mailserver/data/imapsieve_copy:/var/vmail/imapsieve_copy
-      - ./mailserver/data/custom:/opt/iredmail/custom
-      - ./mailserver/data/ssl:/opt/iredmail/ssl
-      - ./mailserver/data/mysql:/var/lib/mysql
-      - ./mailserver/data/clamav:/var/lib/clamav
-      - ./mailserver/data/sa_rules:/var/lib/spamassassin
-      - ./mailserver/data/postfix_queue:/var/spool/postfix
-    ports:
-      - "110:110"
-      - "995:995"
-      - "143:143"
-      - "993:993"
-      - "25:25"
-      - "465:465"
-      - "587:587"
-    networks:
-      - main-net
+#   vaultwarden:
+#     image: vaultwarden/server:latest
+#     container_name: vaultwarden
+#     restart: always
+#     volumes:
+#       - ./vaultwarden/config:/data
+#     environment:
+#       - WEB_VAULT_ENABLED=${VAULTWARDEN_WEB_VAULT_ENABLED}
+#       - TZ=${TZ}
+#     networks:
+#       - main-net
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    ports:
-      - 9443:9443
-    volumes:
-        - portainer-data:/data
-        - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-    networks:
-      - main-net
+#   wireguard:
+#     image: linuxserver/wireguard:latest
+#     container_name: wireguard
+#     cap_add:
+#       - NET_ADMIN
+#       - SYS_MODULE
+#     environment:
+#       - PUID=${WIREGUARD_PUID}
+#       - PGID=${WIREGUARD_PGID}
+#       - TZ=${TZ}
+#     volumes:
+#       - ./wireguard/config:/config
+#     ports:
+#       - "51820:51820/udp"
+#     sysctls:
+#       - net.ipv4.ip_forward=1
+#     networks:
+#       - main-net
 
-volumes:
-  portainer-data:
+#   mailserver:
+#     image: iredmail/mariadb:stable
+#     container_name: mailserver
+#     restart: always
+#     env_file:
+#       - .env
+#     volumes:
+#       - ./mailserver/data/backup-mysql:/var/vmail/backup/mysql
+#       - ./mailserver/data/mailboxes:/var/vmail/vmail1
+#       - ./mailserver/data/mlmmj:/var/vmail/mlmmj
+#       - ./mailserver/data/mlmmj-archive:/var/vmail/mlmmj-archive
+#       - ./mailserver/data/imapsieve_copy:/var/vmail/imapsieve_copy
+#       - ./mailserver/data/custom:/opt/iredmail/custom
+#       - ./mailserver/data/ssl:/opt/iredmail/ssl
+#       - ./mailserver/data/mysql:/var/lib/mysql
+#       - ./mailserver/data/clamav:/var/lib/clamav
+#       - ./mailserver/data/sa_rules:/var/lib/spamassassin
+#       - ./mailserver/data/postfix_queue:/var/spool/postfix
+#     ports:
+#       - "110:110"
+#       - "995:995"
+#       - "143:143"
+#       - "993:993"
+#       - "25:25"
+#       - "465:465"
+#       - "587:587"
+#     networks:
+#       - main-net
+
+#   portainer:
+#     image: portainer/portainer-ce:latest
+#     ports:
+#       - 9443:9443
+#     volumes:
+#         - portainer-data:/data
+#         - /var/run/docker.sock:/var/run/docker.sock
+#     restart: unless-stopped
+#     networks:
+#       - main-net
+
+# volumes:
+#   portainer-data:
 
 networks:
   main-net:
