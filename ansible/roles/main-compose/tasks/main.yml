@@ -56,18 +56,18 @@
     mode: push
     recursive: true
 
-- name: Set executable permissions for all .sh scripts in the scripts folder
-  ansible.builtin.find:
-    paths: "/home/{{ ansible_user }}/dev/compose/scripts/"
-    patterns: "*.sh"
-  register: sh_files
+# - name: Set executable permissions for all .sh scripts in the scripts folder
+#   ansible.builtin.find:
+#     paths: "/home/{{ ansible_user }}/dev/compose/scripts/"
+#     patterns: "*.sh"
+#   register: sh_files
 
-- name: Change file permissions to readable and executable for all users
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    mode: '755'  # Set rwxr-xr-x permissions (read, write, execute for owner, read, execute for group and others)
-  with_items: "{{ sh_files.files }}"
-  when: sh_files.matched > 0
+# - name: Change file permissions to readable and executable for all users
+#   ansible.builtin.file:
+#     path: "{{ item.path }}"
+#     mode: '755'  # Set rwxr-xr-x permissions (read, write, execute for owner, read, execute for group and others)
+#   with_items: "{{ sh_files.files }}"
+#   when: sh_files.matched > 0
 
 # TODO IF NOT FIRST RUN AND SOME file are exists - remove some lines
 
