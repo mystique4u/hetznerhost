@@ -162,7 +162,7 @@ The following services are installed and managed via Docker Compose(plan):
 #### Other TODO
 - persistent storage backup with rsync to hetzner cloud storage
 - restore from storage (for new setups?)
-- description how to use compose and pipelines
+- description how to use compose and pipelines in different cases
 - time setup ansible task
 
 ---
