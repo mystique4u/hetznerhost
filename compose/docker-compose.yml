@@ -18,7 +18,7 @@ services:
    #   - ./nginx/certs:/etc/letsencrypt
       - nginx_secrets:/etc/letsencrypt
       - ./nginx/logs:/var/log/nginx
-      - ./nginx/webroot:/var/www/certbot
+   #   - ./nginx/webroot:/var/www/certbot
     depends_on:
       - python-app
     networks:
