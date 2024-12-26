@@ -78,3 +78,16 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0755'
+
+- name: Stop Docker Compose services
+  command: docker-compose down
+  args:
+    chdir: "/home/{{ ansible_user }}/dev/compose/"
+
+- name: Remove all unused Docker images
+  command: docker image prune -af
+
+- name: Bring up Docker Compose services
+  command: docker-compose up -d
+  args:
+    chdir: "/home/{{ ansible_user }}/dev/compose/"
