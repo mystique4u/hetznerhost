@@ -21,6 +21,7 @@ services:
 
     depends_on:
       - python-app
+      - demo-python-app
     networks:
       - main-net
   # nginx:
@@ -74,6 +75,17 @@ services:
     restart: always
     ports:
       - "5000:5000"
+    networks:
+      - main-net
+  
+  demo-python-app:
+    build:
+      context: ./apps/demo
+      dockerfile: Dockerfile
+    container_name: demo-python-app
+    restart: always
+    ports:
+      - "5001:5001"
     networks:
       - main-net
 
