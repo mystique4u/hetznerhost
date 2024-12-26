@@ -1,6 +1,27 @@
-# Helper VM in Hetzner Cloud
+# Automating Cloud Host Creation and Management
 
-This repository automates the creation, configuration, and setup of a virtual machine (VM) in the Hetzner Cloud using GitHub Actions, Terraform, and Ansible. It also provisions a variety of services on the VM using Docker Compose.
+This repository was created to automate routine tasks using Infrastructure as Code (IaC) principles to provision and manage hosts in the cloud. The Hetzner Cloud provider was chosen as the foundation due to its affordability and extensive feature set.
+
+The key idea behind this project is that no manual configuration should be performed on the host. All host installation and application deployment processes are implemented as code to ensure consistency and repeatability.
+
+## Key Features
+
+### Workflow Overview
+This repository leverages GitHub workflows with Terraform and Ansible for full automation:
+
+1. **Terraform**:
+   - Provisions virtual machines (VMs) in Hetzner Cloud.
+   
+2. **GitHub Actions**:
+   - Creates DNS records using the Hetzner DNS API.
+   - Configures Nginx based on predefined DNS names. (This feature requires further improvement.)
+
+3. **Ansible**:
+   - Updates the operating system.
+   - Installs common packages such as Docker and Docker Compose.
+   - Creates a folder structure for containerized applications.
+   - Synchronizes the Compose folder from the repository to the host.
+   - Stops, deletes images, and re-runs the Docker Compose file for deployment.
 
 ## Overview
 
@@ -89,10 +110,6 @@ Manage domains with Hetzner API based on Nginx configurations:
 3. Enable IP forwarding for WireGuard VPN.
 4. Ensure IP forwarding is persistent.
 5. Allow necessary ports through the firewall.
-6. Create folder structure for Docker Compose.
-7. Copy the entire Compose directory to the server.
-8. **TODO**: If not the first run and some files exist, remove specific lines.
-9. Create secrets .env on host file.
 
 ##### DevTools Tasks
 1. Install Git.
@@ -109,11 +126,22 @@ Manage domains with Hetzner API based on Nginx configurations:
 8. Verify Docker Compose installation.
 9. Display Docker Compose version.
 
+##### Main Compose Task
+1. Create folder structure for Docker Compose
+2. Copy entire compose directory to the server
+3. Create secrets .env file for compose
+4. Stop Docker Compose services
+5. Remove all unused Docker images
+6. Bring up Docker Compose services
+
+
+
+
 ---
 
 ### Services and Tools
 
-#### Tools Installed via Ansible
+#### Tools Installed via Ansible on host
 - **Users & SSH Keys**
 - **Docker**
 - **Docker Compose**
@@ -165,9 +193,9 @@ The following secrets need to be created and set as GitHub Secrets:
 - [x] Connect to the server using Ansible.
     - [x] Update and upgrade packages.
     - [x] Install essential non-Docker apps.
-- [ ] Define networks for Docker Compose.
+- [x] Define networks for Docker Compose.
 - [x] Define iptables rules for external use.
-- [ ] Bring all Docker containers up.
+- [x] Bring all Docker containers up.
 - [x] Add Hetzner DNS API support for record creation.
 
 ---

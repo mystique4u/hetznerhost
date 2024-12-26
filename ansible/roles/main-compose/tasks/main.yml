@@ -1,23 +1,4 @@
 ---
-# Configure UFW firewall rules
-- name: Allow necessary ports through the firewall
-  ufw:
-    rule: allow
-    port: "{{ item }}"
-    proto: "{{ 'udp' if item == '51820' else 'tcp' }}"
-  loop:
-    - 80    # HTTP
-    - 443   # HTTPS
-    - 8080  # phpMyAdmin
-    - 51820 # WireGuard VPN
-    - 110   # POP3
-    - 995   # POP3 Secure
-    - 143   # IMAP
-    - 993   # IMAP Secure
-    - 25    # SMTP
-    - 465   # SMTP Secure
-    - 587   # Submission
-
 # Create folder structure for Docker Compose
 - name: Create folder structure for Docker Compose
   file:
