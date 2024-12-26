@@ -30,8 +30,6 @@
     - compose
     - compose/nginx/config
     - compose/nginx/logs
-    - compose/nginx/certs
-    - compose/nginx/webroot
     - compose/vaultwarden/config
     - compose/wireguard/config
     - compose/mailserver/data/backup-mysql
