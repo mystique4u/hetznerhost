@@ -156,6 +156,9 @@ The following services are installed and managed via Docker Compose(plan):
 - **iRedMail** (open-source mail server) - #TODO
 - **MySQL/PostgreSQL** (database server) - [Tutorial](https://tecadmin.net/using-mysql-with-docker-compose/) - #TODO
 - **Mailserver** - [Mailserver/Docker-Mailserver](https://github.com/mailserver/docker-mailserver) - #TODO?
+#### TODO
+- persistent storage backup with rsync to hetzner cloud storage
+- restore from storage (for new setups?)
 
 ---
 
