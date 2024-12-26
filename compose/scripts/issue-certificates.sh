@@ -4,25 +4,14 @@ set -e
 # Directories and file paths
 DOMAINS_DIR="/etc/nginx/conf.d/domains"
 CERTBOT_WEBROOT="/var/www/certbot"
-RELOAD_SCRIPT="/scripts/reload-nginx.sh"
 CRON_FILE="/etc/crontabs/root"
-
-# Function to reload Nginx
-reload_nginx() {
-    if [ -x "$RELOAD_SCRIPT" ]; then
-        echo "Reloading Nginx..."
-        sh "$RELOAD_SCRIPT"
-    else
-        echo "Reload script $RELOAD_SCRIPT not found or not executable."
-    fi
-}
 
 # Loop through all domain configuration files
 for domain_config in ${DOMAINS_DIR}/*.conf; do
     # Skip if no files found
     [ -f "$domain_config" ] || { echo "No domain configurations found. Skipping."; continue; }
     
-    # Extract the server_name(s) from the configuration using grep -E instead of grep -P
+    # Extract the server_name(s) from the configuration
     DOMAINS=$(grep -E 'server_name[[:space:]]+[^;]+' "$domain_config" | sed 's/server_name[[:space:]]*//g' | sed 's/;.*//g' | tr '\n' ' ')
     
     if [ -z "$DOMAINS" ]; then
@@ -40,7 +29,12 @@ done
 
 echo "Certificate issuance complete."
 
-# Reload Nginx after issuing certificates
+# Reload Nginx using docker exec
+reload_nginx() {
+    echo "Reloading Nginx from control service..."
+    docker exec nginx nginx -s reload
+}
+
 reload_nginx
 
 # Ensure a cron job exists for renewing certificates
