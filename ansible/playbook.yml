@@ -7,3 +7,4 @@
     - common        # OS updates and base tools
     - devtools      # Dev tools like Git, Neovim
     - docker        # Docker and Docker Compose
+    - main-compose       # main compose file
