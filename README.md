@@ -6,35 +6,36 @@ The key idea behind this project is that no manual configuration should be perfo
 
 ## Key Features
 
-### Workflow Overview
-This repository leverages GitHub workflows with Terraform and Ansible for full automation:
+## Workflow Overview
+
+This repository automates cloud host provisioning and management using GitHub workflows with Terraform, Ansible, and Docker Compose.
+
+### Key Components
 
 1. **Terraform**:
-   - Provisions virtual machines (VMs) in Hetzner Cloud.
-   
+   - Provisions virtual machines (VMs) in Hetzner Cloud with specified configurations.
+
 2. **GitHub Actions**:
+   - Automates the provisioning workflow.
    - Creates DNS records using the Hetzner DNS API.
    - Configures Nginx based on predefined DNS names. (This feature requires further improvement.)
 
 3. **Ansible**:
    - Updates the operating system.
-   - Installs common packages such as Docker and Docker Compose.
+   - Installs essential tools such as Docker and Docker Compose.
    - Creates a folder structure for containerized applications.
    - Synchronizes the Compose folder from the repository to the host.
    - Stops, deletes images, and re-runs the Docker Compose file for deployment.
 
-## Overview
+4. **Docker Compose**:
+   - Sets up and manages containerized services on the host.
 
-This workflow leverages the following tools and processes:
+This workflow ensures a fully automated and consistent approach to provisioning and deploying applications in the cloud.
 
-- **Terraform**: Creates a VM in Hetzner Cloud with a specified configuration.
-- **Ansible**: Installs and configures essential tools and services on the VM.
-- **Docker Compose**: Sets up and manages containerized services.
-- **GitHub Actions**: Automates the provisioning workflow.
 
 ---
 
-## Flows
+## Detailed Flows description
 
 ### GIT FLOW
 
@@ -134,9 +135,6 @@ Manage domains with Hetzner API based on Nginx configurations:
 5. Remove all unused Docker images
 6. Bring up Docker Compose services
 
-
-
-
 ---
 
 ### Services and Tools
@@ -152,13 +150,12 @@ Manage domains with Hetzner API based on Nginx configurations:
 #### Docker Compose Services
 The following services are installed and managed via Docker Compose(plan):
 
-- **Vaultwarden** (self-hosted password manager) - [Tutorial](https://github.com/vineethmn/vaultwarden-docker-compose/tree/main)
-- **Nginx** (web server) - [Tutorial](https://xiahua.pages.dev/nginx-certbot-docker/)
-- **WireGuard** (VPN service with Web UI) - [Tutorial](https://github.com/linuxserver/docker-wireguard)
-- **iRedMail** (open-source mail server)
-- **Certbot** (SSL certificates) - [Tutorial](https://xiahua.pages.dev/nginx-certbot-docker/)
-- **MySQL/PostgreSQL** (database server) - [Tutorial](https://tecadmin.net/using-mysql-with-docker-compose/)
-- **Mailserver** - [Mailserver/Docker-Mailserver](https://github.com/mailserver/docker-mailserver)
+- **Vaultwarden** (self-hosted password manager) - #TODO
+- **Nginx-certbot** (web server + letsencrypt)
+- **WireGuard** (VPN service with Web UI) - [Tutorial](https://github.com/linuxserver/docker-wireguard) - #TODO
+- **iRedMail** (open-source mail server) - #TODO
+- **MySQL/PostgreSQL** (database server) - [Tutorial](https://tecadmin.net/using-mysql-with-docker-compose/) - #TODO
+- **Mailserver** - [Mailserver/Docker-Mailserver](https://github.com/mailserver/docker-mailserver) - #TODO?
 
 ---
 
@@ -166,41 +163,30 @@ The following services are installed and managed via Docker Compose(plan):
 
 The following secrets need to be created and set as GitHub Secrets:
 
-- `COMPOSE_ENV`
-- `DNS_API_TOKEN`
-- `DNS_ZONE`
-- `HCLOUD_TOKEN`
-- `SSH_KEY_NAME`
-- `SSH_PRIVATE_KEY`
-- `SSH_PUBLIC_KEY`
-- `SUDO_USER`
-- `TFC_TOKEN`
+- `COMPOSE_ENV` - everything that you want to use on the host as .env file. It will be stored in compose/.env file
+- `DNS_API_TOKEN`- your hetzner DNS API token
+- `DNS_ZONE`- your hetzner DNS zone id(you can get it from url in admin panel)
+- `HCLOUD_TOKEN`- your hetzner cloud API token
+- `SSH_KEY_NAME` - your hetzner ssh key name (is it used?)
+- `SSH_PRIVATE_KEY` - your SSH private key. You have to create SHH key pair. This key you will use for direct host connection 
+- `SSH_PUBLIC_KEY`- your SSH pub key part from created above key pair
+- `SUDO_USER`- just your sudo username
+- `TFC_TOKEN`- your terrafrom cloud api token app.terraform.io. It used terraform cloud as free terraform state storage
 
 ---
 
 ## Prerequisites
 
 - A Hetzner Cloud account with API access.
+- A terraform cloud provider app.terraform.io account.
 - Terraform installed locally(optional for testing).
 - Ansible installed locally (optional for manual provisioning).
 - SSH keypair created and configured.
 
 ---
 
-## To-Do List
 
-- [x] Create server with Terraform (set keys, create user).
-- [x] Connect to the server using Ansible.
-    - [x] Update and upgrade packages.
-    - [x] Install essential non-Docker apps.
-- [x] Define networks for Docker Compose.
-- [x] Define iptables rules for external use.
-- [x] Bring all Docker containers up.
-- [x] Add Hetzner DNS API support for record creation.
-
----
-
-## Getting Started
+## TODO Getting Started
 
 1. Clone the repository:
     ```bash
