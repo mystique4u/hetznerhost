@@ -19,18 +19,6 @@ services:
     networks:
       - main-net
 
-
-  # python-app:
-  #   build:
-  #     context: ./apps/app
-  #     dockerfile: Dockerfile
-  #   container_name: python-app
-  #   restart: always
-  #   ports:
-  #     - "5000:5000"
-  #   networks:
-  #     - main-net
-  
   # PostgreSQL for Odoo
   postgres_odoo:
     image: postgres:latest
@@ -45,7 +33,7 @@ services:
       - ./db/postgresql.conf:/etc/postgresql.conf
       - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf
       - ./db/postgres_data:/var/lib/postgresql/data
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - "5433:5432"  # Expose a different port to avoid conflicts
     networks:
@@ -69,6 +57,17 @@ services:
       - ./odoo/addons:/mnt/extra-addons
     networks:
       - main-net
+
+# python-app:
+#   build:
+#     context: ./apps/app
+#     dockerfile: Dockerfile
+#   container_name: python-app
+#   restart: always
+#   ports:
+#     - "5000:5000"
+#   networks:
+#     - main-net
 
 #   vaultwarden:
 #     image: vaultwarden/server:latest
@@ -129,20 +128,6 @@ services:
 #       - "587:587"
 #     networks:
 #       - main-net
-
-#   portainer:
-#     image: portainer/portainer-ce:latest
-#     ports:
-#       - 9443:9443
-#     volumes:
-#         - portainer-data:/data
-#         - /var/run/docker.sock:/var/run/docker.sock
-#     restart: unless-stopped
-#     networks:
-#       - main-net
-
-# volumes:
-#   portainer-data:
 
 
 volumes:

@@ -35,7 +35,7 @@
     mode: push
     recursive: true
     rsync_opts:
-      - "--chmod=F755"
+      - "--chmod=F644"
 
 # - name: Set executable permissions for all .sh scripts in the scripts folder
 #   ansible.builtin.find:
