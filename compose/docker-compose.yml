@@ -15,7 +15,7 @@ services:
       - ./nginx/logs:/var/log/nginx
     depends_on:
       - postgres_odoo
-      - postgres_adminer
+      - odoo
     networks:
       - main-net
 
@@ -46,21 +46,6 @@ services:
     networks:
       - main-net
 
-  # PostgreSQL for Adminer or Another Service
-  postgres_adminer:
-    image: postgres:latest
-    container_name: postgres_adminer
-    environment:
-      POSTGRES_USER: ${ADMINER_DB_USER}
-      POSTGRES_PASSWORD: ${ADMINER_DB_PASSWORD}
-      POSTGRES_DB: ${ADMINER_DB_NAME}
-    volumes:
-      - ./db/adminer:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"  # Expose a different port to avoid conflicts
-    networks:
-      - main-net
-
   # Odoo Service
   odoo:
     image: odoo:latest
@@ -77,19 +62,6 @@ services:
       - "8069:8069"
     volumes:
       - ./odoo_data:/var/lib/odoo
-    networks:
-      - main-net
-
-  # Adminer Service
-  adminer:
-    image: adminer:latest
-    container_name: adminer
-    depends_on:
-      - postgres_adminer
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres_adminer
-    ports:
-      - "8080:8080"
     networks:
       - main-net
 
