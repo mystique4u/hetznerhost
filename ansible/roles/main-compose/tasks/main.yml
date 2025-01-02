@@ -43,7 +43,8 @@
     mode: '0777'
     recurse: yes
   loop:
-    - "/home/{{ ansible_user }}/dev/compose/odoo/odoo_data"
+    - "/home/{{ ansible_user }}/dev/compose/odoo"
+    - "/home/{{ ansible_user }}/dev/compose/db"
 
 # - name: Set executable permissions for all .sh scripts in the scripts folder
 #   ansible.builtin.find:
