@@ -36,7 +36,7 @@ services:
     command: postgres -c config_file=/etc/postgresql.conf
     restart: always
     ports:
-      - "5433:5432"  # Expose a different port to avoid conflicts
+      - "5433:5432"
     networks:
       - main-net
 
