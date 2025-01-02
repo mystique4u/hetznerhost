@@ -61,7 +61,7 @@
     mode: '0755'
 
 - name: Stop Docker Compose services
-  command: docker-compose down
+  command: docker-compose down --remove-orphans
   args:
     chdir: "/home/{{ ansible_user }}/dev/compose/"
 
