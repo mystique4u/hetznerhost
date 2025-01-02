@@ -10,82 +10,86 @@ services:
       - 80:80
       - 443:443
     volumes:                                    
-   #  - ./user_conf.d:/etc/nginx/user_conf.d
-   #   - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
-   #  - ./nginx/config/domains:/etc/nginx/domains
       - ./nginx/config/domains:/etc/nginx/user_conf.d
-   #  - ./nginx/certs:/etc/letsencrypt
       - nginx_secrets:/etc/letsencrypt
       - ./nginx/logs:/var/log/nginx
-   #  - ./nginx/webroot:/var/www/certbot
-
     depends_on:
-      - python-app
-      - demo-python-app
+      - postgres_odoo
+      - postgres_adminer
     networks:
       - main-net
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
+
+
+  # python-app:
+  #   build:
+  #     context: ./apps/app
+  #     dockerfile: Dockerfile
+  #   container_name: python-app
   #   restart: always
-  #   volumes:
-  #     - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./nginx/config/domains:/etc/nginx/conf.d/domains
-  #     - ./nginx/certs:/etc/letsencrypt
-  #     - ./nginx/logs:/var/log/nginx
-  #     - ./nginx/webroot:/var/www/certbot
   #   ports:
-  #     - "80:80"
-  #     - "443:443"
-
-  #   depends_on:
-  #     - python-app
+  #     - "5000:5000"
   #   networks:
   #     - main-net
-
-  # certbot:
-  #   image: certbot/certbot:latest
-  #   container_name: certbot
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - nginx
-  #   volumes:
-  #     - ./nginx/certs:/etc/letsencrypt
-  #     - ./nginx/webroot:/var/www/certbot
-  #     - ./nginx/config/domains:/etc/nginx/conf.d/domains
-  #     - ./scripts:/scripts
-  #   entrypoint: ["/bin/sh", "-c", "chmod +x /scripts/*.sh && /scripts/issue-certificates.sh 2>&1"]
-  #   networks:
-  #     - main-net
-
-  # control:
-  #   image: alpine:latest
-  #   container_name: control
-  #   restart: always
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   networks:
-  #     - main-net
-
-  python-app:
-    build:
-      context: ./apps/app
-      dockerfile: Dockerfile
-    container_name: python-app
-    restart: always
+  
+  # PostgreSQL for Odoo
+  postgres_odoo:
+    image: postgres:latest
+    container_name: postgres_odoo
+    environment:
+      POSTGRES_USER: ${ODOO_DB_USER}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
+      POSTGRES_DB: ${ODOO_DB_NAME}
+    volumes:
+      - ./db/odoo:/var/lib/postgresql/data
     ports:
-      - "5000:5000"
+      - "5433:5432"  # Expose a different port to avoid conflicts
     networks:
       - main-net
-  
-  demo-python-app:
-    build:
-      context: ./apps/demo
-      dockerfile: Dockerfile
-    container_name: demo-python-app
-    restart: always
+
+  # PostgreSQL for Adminer or Another Service
+  postgres_adminer:
+    image: postgres:latest
+    container_name: postgres_adminer
+    environment:
+      POSTGRES_USER: ${ADMINER_DB_USER}
+      POSTGRES_PASSWORD: ${ADMINER_DB_PASSWORD}
+      POSTGRES_DB: ${ADMINER_DB_NAME}
+    volumes:
+      - ./db/adminer:/var/lib/postgresql/data
     ports:
-      - "5001:5001"
+      - "5434:5432"  # Expose a different port to avoid conflicts
+    networks:
+      - main-net
+
+  # Odoo Service
+  odoo:
+    image: odoo:latest
+    container_name: odoo
+    depends_on:
+      - postgres_odoo
+    environment:
+      POSTGRES_HOST: postgres_odoo
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${ODOO_DB_USER}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
+      POSTGRES_DB: ${ODOO_DB_NAME}
+    ports:
+      - "8069:8069"
+    volumes:
+      - ./odoo_data:/var/lib/odoo
+    networks:
+      - main-net
+
+  # Adminer Service
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    depends_on:
+      - postgres_adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres_adminer
+    ports:
+      - "8080:8080"
     networks:
       - main-net
 
