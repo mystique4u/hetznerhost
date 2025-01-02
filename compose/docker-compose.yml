@@ -39,8 +39,13 @@ services:
       POSTGRES_USER: ${ODOO_DB_USER}
       POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
       POSTGRES_DB: ${ODOO_DB_NAME}
+      PGDATA: ${ODOO_DB_PGDATA}
     volumes:
-      - ./db/odoo:/var/lib/postgresql/data
+      - ./db/odoo:/var/lib/postgresql/data/pgdata
+      - ./db/postgresql.conf:/etc/postgresql.conf
+      - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./db/postgres_data:/var/lib/postgresql/data
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     ports:
       - "5433:5432"  # Expose a different port to avoid conflicts
     networks:
@@ -58,10 +63,13 @@ services:
       POSTGRES_USER: ${ODOO_DB_USER}
       POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
       POSTGRES_DB: ${ODOO_DB_NAME}
+      PGDATA: ${ODOO_DB_PGDATA}
     ports:
       - "8069:8069"
     volumes:
-      - ./odoo_data:/var/lib/odoo
+      - ./odoo/odoo_data:/var/lib/odoo
+      - ./odoo/config:/etc/odoo
+      - ./odoo/addons:/mnt/extra-addons
     networks:
       - main-net
 
