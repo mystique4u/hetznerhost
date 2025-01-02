@@ -37,6 +37,14 @@
     rsync_opts:
       - "--chmod=F644"
 
+- name: Set write permission for all users on specific folders and their contents
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0777'
+    recurse: yes
+  loop:
+    - "/home/{{ ansible_user }}/dev/compose/odoo/odoo_data"
+
 # - name: Set executable permissions for all .sh scripts in the scripts folder
 #   ansible.builtin.find:
 #     paths: "/home/{{ ansible_user }}/dev/compose/scripts/"

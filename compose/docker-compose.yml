@@ -49,6 +49,7 @@ services:
       HOST: postgres_odoo
       USER: ${ODOO_DB_USER}
       PASSWORD: ${ODOO_DB_PASSWORD}
+      POSTGRES_DB: ${ODOO_DB_NAME}
     ports:
       - "8069:8069"
     volumes:
