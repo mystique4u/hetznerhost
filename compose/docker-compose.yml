@@ -58,12 +58,9 @@ services:
     depends_on:
       - postgres_odoo
     environment:
-      POSTGRES_HOST: postgres_odoo
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${ODOO_DB_USER}
-      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
-      POSTGRES_DB: ${ODOO_DB_NAME}
-      PGDATA: ${ODOO_DB_PGDATA}
+      HOST: postgres_odoo
+      USER: ${ODOO_DB_USER}
+      PASSWORD: ${ODOO_DB_PASSWORD}
     ports:
       - "8069:8069"
     volumes:
