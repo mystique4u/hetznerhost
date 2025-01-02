@@ -34,6 +34,7 @@ services:
       - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf
       - ./db/postgres_data:/var/lib/postgresql/data
     command: postgres -c config_file=/etc/postgresql.conf
+    restart: always
     ports:
       - "5433:5432"  # Expose a different port to avoid conflicts
     networks:
@@ -50,8 +51,12 @@ services:
       USER: ${ODOO_DB_USER}
       PASSWORD: ${ODOO_DB_PASSWORD}
       POSTGRES_DB: ${ODOO_DB_NAME}
+    restart: always
     ports:
       - "8069:8069"
+      - "8072:8072"
+    tty: true
+    command: --
     volumes:
       - ./odoo/odoo_data:/var/lib/odoo
       - ./odoo/config:/etc/odoo
