@@ -53,6 +53,12 @@
   args:
     _uses_shell: true
 
+- name: Remove all Docker containers
+  ansible.builtin.shell: docker rm $(docker ps -a -q)
+  args:
+    _uses_shell: true
+
+
 - name: Remove all Docker networks (including unused)
   command: docker network prune -f
 
