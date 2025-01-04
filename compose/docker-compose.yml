@@ -8,16 +8,8 @@ services:
     environment:
       CERTBOT_EMAIL: "mystique4u@gmail.com"
     ports:
-      - 80:80
-      - 443:443
-      - 25:25
-      - 465:465
-      - 587:587
-      - 110:110
-      - 995:995
-      - 143:143
-      - 993:993
-      - 4190:4190
+      - "128.140.14.147:80:80"
+      - "128.140.14.147:443:443"
     volumes:
       - ./nginx/config/domains:/etc/nginx/user_conf.d
       - nginx_secrets:/etc/letsencrypt
@@ -80,6 +72,8 @@ services:
       - "./mailu/redis:/data"
     depends_on:
       - resolver
+    dns:
+      - 192.168.20.254
     networks:
       - main-net
 
@@ -92,6 +86,15 @@ services:
       driver: journald
       options:
         tag: mailu-front
+    ports:
+      - "128.140.14.147:25:25"
+      - "128.140.14.147:465:465"
+      - "128.140.14.147:587:587"
+      - "128.140.14.147:110:110"
+      - "128.140.14.147:995:995"
+      - "128.140.14.147:143:143"
+      - "128.140.14.147:993:993"
+      - "128.140.14.147:4190:4190"
     networks:
       - main-net
     volumes:
@@ -99,6 +102,8 @@ services:
       - "./mailu/overrides/nginx:/overrides:ro"
     depends_on:
       - resolver
+    dns:
+      - 192.168.20.254
 
   resolver:
     container_name: mailu-resolver
@@ -128,6 +133,8 @@ services:
     depends_on:
       - redis
       - resolver
+    dns:
+      - 192.168.20.254
     networks:
       - main-net
 
@@ -147,6 +154,9 @@ services:
       - main-net
     depends_on:
       - front
+      - resolver
+    dns:
+      - 192.168.20.254
 
   smtp:
     container_name: mailu-smtp
@@ -164,6 +174,9 @@ services:
       - main-net
     depends_on:
       - front
+      - resolver
+    dns:
+      - 192.168.20.254
 
   webmail:
     container_name: mailu-webmail
