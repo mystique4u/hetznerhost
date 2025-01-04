@@ -73,6 +73,7 @@ services:
 
   # Mailu Services
   redis:
+    container_name: mailu-redis
     image: redis:alpine
     restart: always
     volumes:
@@ -83,6 +84,7 @@ services:
       - main-net
 
   front:
+    container_name: mailu-front
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}nginx:${MAILU_VERSION:-2024.06}
     restart: always
     env_file: ".env"
@@ -99,6 +101,7 @@ services:
       - resolver
 
   resolver:
+    container_name: mailu-resolver
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}unbound:${MAILU_VERSION:-2024.06}
     env_file: ".env"
     logging:
@@ -111,6 +114,7 @@ services:
         ipv4_address: 192.168.20.254
 
   admin:
+    container_name: mailu-admin
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}admin:${MAILU_VERSION:-2024.06}
     restart: always
     env_file: ".env"
@@ -128,6 +132,7 @@ services:
       - main-net
 
   imap:
+    container_name: mailu-imap
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}dovecot:${MAILU_VERSION:-2024.06}
     restart: always
     env_file: ".env"
@@ -144,6 +149,7 @@ services:
       - front
 
   smtp:
+    container_name: mailu-smtp
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}postfix:${MAILU_VERSION:-2024.06}
     restart: always
     env_file: ".env"
@@ -160,6 +166,7 @@ services:
       - front
 
   webmail:
+    container_name: mailu-webmail
     image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}webmail:${MAILU_VERSION:-2024.06}
     restart: always
     env_file: ".env"
