@@ -48,16 +48,11 @@
   args:
     chdir: "/home/{{ ansible_user }}/dev/compose/"
 
-- name: Stop all Docker containers
-  ansible.builtin.shell: docker stop $(docker ps -a -q)
+- name: Stop and remove all Docker containers
+  ansible.builtin.shell: |
+    docker container prune -f
   args:
     _uses_shell: true
-
-- name: Remove all Docker containers
-  ansible.builtin.shell: docker rm $(docker ps -a -q)
-  args:
-    _uses_shell: true
-
 
 - name: Remove all Docker networks (including unused)
   command: docker network prune -f
