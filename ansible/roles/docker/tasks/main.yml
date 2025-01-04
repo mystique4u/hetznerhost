@@ -42,3 +42,20 @@
 - name: Display Docker Compose version
   debug:
     msg: "Docker Compose version: {{ docker_compose_version.stdout }}"
+
+- name: Stop Docker Compose services
+  command: docker-compose down --remove-orphans
+  args:
+    chdir: "/home/{{ ansible_user }}/dev/compose/"
+
+- name: Stop all Docker containers
+  ansible.builtin.shell: |
+    docker stop $(docker ps -a -q)
+  args:
+    warn: false
+
+- name: Remove all Docker networks (including unused)
+  command: docker network prune -f
+
+- name: Remove all unused Docker images
+  command: docker image prune -af
