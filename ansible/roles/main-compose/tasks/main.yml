@@ -76,8 +76,8 @@
   args:
     chdir: "/home/{{ ansible_user }}/dev/compose/"
 
-- name: Remove all Docker containers
-  command: docker container prune -f
+- name: Stop all Docker containers
+  command: docker stop $(docker ps -a -q)
 
 - name: Remove all Docker networks (including unused)
   command: docker network prune -f
