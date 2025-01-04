@@ -1,0 +1,165 @@
+server {
+    listen 80;
+    server_name mail.itin.dev;
+
+    location / {
+        proxy_pass http://mailu-front:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name mail.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/mail.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/mail.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mail.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    location / {
+        proxy_pass http://mailu-front:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+
+
+
+####
+
+# SMTP (port 25)
+server {
+    listen 25;
+    server_name mail.itin.dev;
+
+    location / {
+        proxy_pass http://mailu-front:25;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+    }
+}
+
+# SMTPS (port 465)
+server {
+    listen 465 ssl;
+    server_name mail.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/mail.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/mail.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mail.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+
+    proxy_pass http://mailu-front:465;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+}
+
+# Submission (port 587)
+server {
+    listen 587 ssl;
+    server_name mail.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/mail.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/mail.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mail.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    proxy_pass http://mailu-front:587;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+}
+
+# IMAP (port 143)
+server {
+    listen 143;
+    server_name mail.itin.dev;
+
+    location / {
+        proxy_pass http://mailu-front:143;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+    }
+}
+
+# IMAPS (port 993)
+server {
+    listen 993 ssl;
+    server_name mail.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/mail.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/mail.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mail.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    proxy_pass http://mailu-front:993;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+}
+
+# POP3 (port 110)
+server {
+    listen 110;
+    server_name mail.itin.dev;
+
+    location / {
+        proxy_pass http://mailu-front:110;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+    }
+}
+
+# POP3S (port 995)
+server {
+    listen 995 ssl;
+    server_name mail.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/mail.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/mail.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mail.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    proxy_pass http://mailu-front:995;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+}
+
+# ManageSieve (port 4190)
+server {
+    listen 4190;
+    server_name mail.itin.dev;
+
+    location / {
+        proxy_pass http://mailu-front:4190;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+    }
+}

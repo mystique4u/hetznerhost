@@ -1,25 +1,26 @@
 version: '3.8'
 
 services:
+  # Existing Services
   nginx:
     image: jonasal/nginx-certbot:latest
     restart: unless-stopped
     environment:
-        CERTBOT_EMAIL: "mystique4u@gmail.com"
+      CERTBOT_EMAIL: "mystique4u@gmail.com"
     ports:
       - 80:80
       - 443:443
-    volumes:                                    
+    volumes:
       - ./nginx/config/domains:/etc/nginx/user_conf.d
       - nginx_secrets:/etc/letsencrypt
       - ./nginx/logs:/var/log/nginx
     depends_on:
       - postgres_odoo
       - odoo
+      - front
     networks:
       - main-net
 
-  # PostgreSQL for Odoo
   postgres_odoo:
     image: postgres:latest
     container_name: postgres_odoo
@@ -29,7 +30,6 @@ services:
       POSTGRES_DB: ${ODOO_DB_NAME}
       PGDATA: ${ODOO_DB_PGDATA}
     volumes:
-#      - ./db/odoo/pgdata:/var/lib/postgresql/data/pgdata
       - ./db/postgres_data:/var/lib/postgresql/data
       - ./db/postgresql.conf:/etc/postgresql.conf
       - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf
@@ -40,7 +40,6 @@ services:
     networks:
       - main-net
 
-  # Odoo Service
   odoo:
     image: odoo:latest
     container_name: odoo
@@ -64,77 +63,109 @@ services:
     networks:
       - main-net
 
-# python-app:
-#   build:
-#     context: ./apps/app
-#     dockerfile: Dockerfile
-#   container_name: python-app
-#   restart: always
-#   ports:
-#     - "5000:5000"
-#   networks:
-#     - main-net
+  # Mailu Services
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - "./mailu/redis:/data"
+    depends_on:
+      - resolver
+    networks:
+      - main-net
 
-#   vaultwarden:
-#     image: vaultwarden/server:latest
-#     container_name: vaultwarden
-#     restart: always
-#     volumes:
-#       - ./vaultwarden/config:/data
-#     environment:
-#       - WEB_VAULT_ENABLED=${VAULTWARDEN_WEB_VAULT_ENABLED}
-#       - TZ=${TZ}
-#     networks:
-#       - main-net
+  front:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}nginx:${MAILU_VERSION:-2024.06}
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-front
+    networks:
+      - main-net
+    volumes:
+      - "./mailu/certs:/certs"
+      - "./mailu/overrides/nginx:/overrides:ro"
+    depends_on:
+      - resolver
 
-#   wireguard:
-#     image: linuxserver/wireguard:latest
-#     container_name: wireguard
-#     cap_add:
-#       - NET_ADMIN
-#       - SYS_MODULE
-#     environment:
-#       - PUID=${WIREGUARD_PUID}
-#       - PGID=${WIREGUARD_PGID}
-#       - TZ=${TZ}
-#     volumes:
-#       - ./wireguard/config:/config
-#     ports:
-#       - "51820:51820/udp"
-#     sysctls:
-#       - net.ipv4.ip_forward=1
-#     networks:
-#       - main-net
+  resolver:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}unbound:${MAILU_VERSION:-2024.06}
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-resolver
+    restart: always
+    networks:
+      main-net:
+        ipv4_address: 172.30.255.254
 
-#   mailserver:
-#     image: iredmail/mariadb:stable
-#     container_name: mailserver
-#     restart: always
-#     env_file:
-#       - .env
-#     volumes:
-#       - ./mailserver/data/backup-mysql:/var/vmail/backup/mysql
-#       - ./mailserver/data/mailboxes:/var/vmail/vmail1
-#       - ./mailserver/data/mlmmj:/var/vmail/mlmmj
-#       - ./mailserver/data/mlmmj-archive:/var/vmail/mlmmj-archive
-#       - ./mailserver/data/imapsieve_copy:/var/vmail/imapsieve_copy
-#       - ./mailserver/data/custom:/opt/iredmail/custom
-#       - ./mailserver/data/ssl:/opt/iredmail/ssl
-#       - ./mailserver/data/mysql:/var/lib/mysql
-#       - ./mailserver/data/clamav:/var/lib/clamav
-#       - ./mailserver/data/sa_rules:/var/lib/spamassassin
-#       - ./mailserver/data/postfix_queue:/var/spool/postfix
-#     ports:
-#       - "110:110"
-#       - "995:995"
-#       - "143:143"
-#       - "993:993"
-#       - "25:25"
-#       - "465:465"
-#       - "587:587"
-#     networks:
-#       - main-net
+  admin:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}admin:${MAILU_VERSION:-2024.06}
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-admin
+    volumes:
+      - "./mailu/data:/data"
+      - "./mailu/dkim:/dkim"
+    depends_on:
+      - redis
+      - resolver
+    networks:
+      - main-net
 
+  imap:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}dovecot:${MAILU_VERSION:-2024.06}
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-imap
+    volumes:
+      - "./mailu/mail:/mail"
+      - "./mailu/overrides/dovecot:/overrides:ro"
+    networks:
+      - main-net
+    depends_on:
+      - front
+
+  smtp:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}postfix:${MAILU_VERSION:-2024.06}
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-smtp
+    volumes:
+      - "./mailu/mailqueue:/queue"
+      - "./mailu/overrides/postfix:/overrides:ro"
+    networks:
+      - main-net
+    depends_on:
+      - front
+
+  webmail:
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}webmail:${MAILU_VERSION:-2024.06}
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-webmail
+    volumes:
+      - "./mailu/webmail:/data"
+      - "./mailu/overrides/roundcube:/overrides:ro"
+    networks:
+      - main-net
+    depends_on:
+      - front
 
 volumes:
   nginx_secrets:
@@ -142,3 +173,6 @@ volumes:
 networks:
   main-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
