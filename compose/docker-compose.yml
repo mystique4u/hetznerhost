@@ -1,25 +1,6 @@
 version: '3.8'
 
 services:
-  # Existing Services
-  # nginx:
-  #   image: jonasal/nginx-certbot:latest
-  #   restart: unless-stopped
-  #   environment:
-  #     CERTBOT_EMAIL: "mystique4u@gmail.com"
-  #   ports:
-  #     - "128.140.14.147:80:80"
-  #     - "128.140.14.147:443:443"
-  #   volumes:
-  #     - ./nginx/config/domains:/etc/nginx/user_conf.d
-  #     - nginx_secrets:/etc/letsencrypt
-  #     - ./nginx/logs:/var/log/nginx
-  #   depends_on:
-  #     - postgres_odoo
-  #     - odoo
-  #     - front
-  #   networks:
-  #     - main-net
   traefik:
     image: traefik:v2.10
     container_name: traefik
@@ -32,6 +13,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "25:25"
+      - "465:465"
+      - "993:993"
+      - "995:995"
+      - "4190:4190"
     environment:
       - TZ=UTC
     labels:
@@ -135,10 +121,51 @@ services:
       - 192.168.20.254
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mailu.rule=Host(`mail.itin.dev`)"
-      - "traefik.http.routers.mailu.entrypoints=websecure"
-      - "traefik.http.routers.mailu.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mailu.loadbalancer.server.port=80"
+
+      # the second part is important to ensure Mailu can get certificates from letsencrypt for all hostnames
+      - "traefik.http.routers.web.rule=Host(`mail.itin.dev`) || PathPrefix(`/.well-known/acme-challenge/`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
+
+      # other FQDNS can be added here:
+      - "traefik.tcp.routers.websecure.rule=HostSNI(`mail.itin.dev`) || HostSNI(`autoconfig.example.com`) || HostSNI(`mta-sts.example.com`)"
+      - "traefik.tcp.routers.websecure.entrypoints=websecure"
+      - "traefik.tcp.routers.websecure.tls.passthrough=true"
+      - "traefik.tcp.routers.websecure.service=websecure"
+      - "traefik.tcp.services.websecure.loadbalancer.server.port=443"
+      - "traefik.tcp.services.websecure.loadbalancer.proxyProtocol.version=2"
+
+      - "traefik.tcp.routers.smtp.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.smtp.entrypoints=smtp"
+      - "traefik.tcp.routers.smtp.service=smtp"
+      - "traefik.tcp.services.smtp.loadbalancer.server.port=25"
+      - "traefik.tcp.services.smtp.loadbalancer.proxyProtocol.version=2"
+
+      - "traefik.tcp.routers.submissions.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.submissions.entrypoints=submissions"
+      - "traefik.tcp.routers.submissions.service=submissions"
+      - "traefik.tcp.services.submissions.loadbalancer.server.port=465"
+      - "traefik.tcp.services.submissions.loadbalancer.proxyProtocol.version=2"
+
+      - "traefik.tcp.routers.imaps.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.imaps.entrypoints=imaps"
+      - "traefik.tcp.routers.imaps.service=imaps"
+      - "traefik.tcp.services.imaps.loadbalancer.server.port=993"
+      - "traefik.tcp.services.imaps.loadbalancer.proxyProtocol.version=2"
+
+      - "traefik.tcp.routers.pop3s.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.pop3s.entrypoints=pop3s"
+      - "traefik.tcp.routers.pop3s.service=pop3s"
+      - "traefik.tcp.services.pop3s.loadbalancer.server.port=995"
+      - "traefik.tcp.services.pop3s.loadbalancer.proxyProtocol.version=2"
+
+      - "traefik.tcp.routers.sieve.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.sieve.entrypoints=sieve"
+      - "traefik.tcp.routers.sieve.service=sieve"
+      - "traefik.tcp.services.sieve.loadbalancer.server.port=4190"
+      - "traefik.tcp.services.sieve.loadbalancer.proxyProtocol.version=2"
+    healthcheck:
+      test: ['NONE']
 
   resolver:
     container_name: mailu-resolver

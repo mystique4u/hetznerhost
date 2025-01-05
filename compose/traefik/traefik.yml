@@ -8,6 +8,16 @@ entryPoints:
     address: ":80"
   websecure:
     address: ":443"
+  smtp:
+    address: ":25"
+  submissions:
+    address: ":465"
+  imaps:
+    address: ":993"
+  pop3s:
+    address: ":995"
+  sieve:
+    address: ":4190"
 
 certificatesResolvers:
   letsencrypt:
