@@ -1,0 +1,26 @@
+server {
+    listen 443 ssl;
+    server_name portainer.itin.dev;
+
+    # Load the certificate files.
+    ssl_certificate         /etc/letsencrypt/live/portainer.itin.dev/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/portainer.itin.dev/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/portainer.itin.dev/chain.pem;
+
+    # Load the Diffie-Hellman parameter.
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    location / {
+        proxy_pass http://portainer:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    error_page 502 /errorpages/502.html;
+    location = /errorpages/502.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}

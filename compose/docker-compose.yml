@@ -196,8 +196,24 @@ services:
     depends_on:
       - front
 
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    command: -H unix:///var/run/docker.sock
+    environment:
+      - TZ=UTC
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./portainer/data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - main-net
+
 volumes:
   nginx_secrets:
+  portainer_data:
 
 networks:
   main-net:
