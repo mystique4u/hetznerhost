@@ -128,7 +128,7 @@ services:
       - "traefik.http.services.web.loadbalancer.server.port=80"
 
       # other FQDNS can be added here:
-      - "traefik.tcp.routers.websecure.rule=HostSNI(`mail.itin.dev`) || HostSNI(`autoconfig.example.com`) || HostSNI(`mta-sts.example.com`)"
+      - "traefik.tcp.routers.websecure.rule=HostSNI(`mail.itin.dev`) || HostSNI(`autoconfig.itin.dev`)"
       - "traefik.tcp.routers.websecure.entrypoints=websecure"
       - "traefik.tcp.routers.websecure.tls.passthrough=true"
       - "traefik.tcp.routers.websecure.service=websecure"
@@ -236,6 +236,46 @@ services:
       - main-net
     depends_on:
       - front
+      - resolver
+    dns:
+      - 192.168.20.254
+
+  oletools:
+    container_name: mailu-oletools
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}oletools:${MAILU_VERSION:-2024.06}
+    hostname: oletools
+    logging:
+      driver: journald
+      options:
+        tag: mailu-oletools
+    restart: always
+    networks:
+      - main-net
+    depends_on:
+      - resolver
+    dns:
+      - 192.168.20.254
+
+
+  antispam:
+    container_name: mailu-antispam
+    image: ${DOCKER_ORG:-ghcr.io/mailu}/${DOCKER_PREFIX:-}rspamd:${MAILU_VERSION:-2024.06}
+    hostname: antispam
+    restart: always
+    env_file: ".env"
+    logging:
+      driver: journald
+      options:
+        tag: mailu-antispam
+    networks:
+      - main-net
+    volumes:
+      - "/mailu/filter:/var/lib/rspamd"
+      - "/mailu/overrides/rspamd:/overrides:ro"
+    depends_on:
+      - front
+      - redis
+      - oletools
       - resolver
     dns:
       - 192.168.20.254
