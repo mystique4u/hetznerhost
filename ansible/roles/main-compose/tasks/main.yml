@@ -46,6 +46,11 @@
     - "/home/{{ ansible_user }}/dev/compose/odoo"
     - "/home/{{ ansible_user }}/dev/compose/db"
 
+- name: Ensure acme.json has 600 permissions
+  file:
+    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    mode: '0600'
+
 # - name: Set executable permissions for all .sh scripts in the scripts folder
 #   ansible.builtin.find:
 #     paths: "/home/{{ ansible_user }}/dev/compose/scripts/"

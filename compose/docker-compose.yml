@@ -2,22 +2,47 @@ version: '3.8'
 
 services:
   # Existing Services
-  nginx:
-    image: jonasal/nginx-certbot:latest
-    restart: unless-stopped
-    environment:
-      CERTBOT_EMAIL: "mystique4u@gmail.com"
-    ports:
-      - "128.140.14.147:80:80"
-      - "128.140.14.147:443:443"
+  # nginx:
+  #   image: jonasal/nginx-certbot:latest
+  #   restart: unless-stopped
+  #   environment:
+  #     CERTBOT_EMAIL: "mystique4u@gmail.com"
+  #   ports:
+  #     - "128.140.14.147:80:80"
+  #     - "128.140.14.147:443:443"
+  #   volumes:
+  #     - ./nginx/config/domains:/etc/nginx/user_conf.d
+  #     - nginx_secrets:/etc/letsencrypt
+  #     - ./nginx/logs:/var/log/nginx
+  #   depends_on:
+  #     - postgres_odoo
+  #     - odoo
+  #     - front
+  #   networks:
+  #     - main-net
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
     volumes:
-      - ./nginx/config/domains:/etc/nginx/user_conf.d
-      - nginx_secrets:/etc/letsencrypt
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      - postgres_odoo
-      - odoo
-      - front
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/etc/traefik/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=UTC
+    labels:
+      - "traefik.enable=true"
+      # Traefik dashboard
+      - "traefik.http.routers.api.rule=Host(`traefik.itin.dev`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
+      - "traefik.http.routers.api.middlewares=auth"
     networks:
       - main-net
 
@@ -51,15 +76,18 @@ services:
       PASSWORD: ${ODOO_DB_PASSWORD}
       POSTGRES_DB: ${ODOO_DB_NAME}
     restart: always
-    ports:
-      - "8069:8069"
-      - "8072:8072"
     tty: true
     command: --
     volumes:
       - ./odoo/odoo_data:/var/lib/odoo
       - ./odoo/config:/etc/odoo
       - ./odoo/addons:/mnt/extra-addons
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.odoo.rule=Host(`crm.itin.dev`)"
+      - "traefik.http.routers.odoo.entrypoints=websecure"
+      - "traefik.http.routers.odoo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.odoo.loadbalancer.server.port=8069"
     networks:
       - main-net
 
@@ -86,16 +114,7 @@ services:
       driver: journald
       options:
         tag: mailu-front
-    ports:
-      - 7080:80
-      - "128.140.14.147:25:25"
-      - "128.140.14.147:465:465"
-      - "128.140.14.147:587:587"
-      - "128.140.14.147:110:110"
-      - "128.140.14.147:995:995"
-      - "128.140.14.147:143:143"
-      - "128.140.14.147:993:993"
-      - "128.140.14.147:4190:4190"
+    # Internal ports only, exposed via Traefik
     networks:
       - main-net
     volumes:
@@ -105,6 +124,12 @@ services:
       - resolver
     dns:
       - 192.168.20.254
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailu.rule=Host(`mail.example.com`)"
+      - "traefik.http.routers.mailu.entrypoints=websecure"
+      - "traefik.http.routers.mailu.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mailu.loadbalancer.server.port=80"
 
   resolver:
     container_name: mailu-resolver
@@ -213,7 +238,6 @@ services:
 
 volumes:
   nginx_secrets:
-  portainer_data:
 
 networks:
   main-net:
