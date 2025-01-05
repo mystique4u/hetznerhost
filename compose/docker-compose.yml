@@ -126,7 +126,7 @@ services:
       - 192.168.20.254
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mailu.rule=Host(`mail.example.com`)"
+      - "traefik.http.routers.mailu.rule=Host(`mail.itin.dev`)"
       - "traefik.http.routers.mailu.entrypoints=websecure"
       - "traefik.http.routers.mailu.tls.certresolver=letsencrypt"
       - "traefik.http.services.mailu.loadbalancer.server.port=80"
