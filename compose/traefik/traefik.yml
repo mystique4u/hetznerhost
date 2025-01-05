@@ -1,3 +1,8 @@
+api:
+  insecure: false
+  dashboard: true
+  # Optional: Expose the dashboard on a specific path, e.g. /traefik
+
 entryPoints:
   web:
     address: ":80"
