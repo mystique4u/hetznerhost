@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Define variables using Ansible variables
+STORAGE_BOX_HOST="{{ storage_box_host }}"
+STORAGE_BOX_USER="{{ storage_box_user }}"
+STORAGE_BOX_PORT=23
+STORAGE_BOX_TARGET_DIR="{{ storage_box_target_dir }}"
+LOCAL_BACKUP_DIR="{{ local_backup_dir }}"
+SSH_PRIVATE_KEY="{{ ssh_private_key }}"
+FULL_HOST="$STORAGE_BOX_USER.$STORAGE_BOX_HOST"
+
+# Ensure SSH private key exists (this should match your Ansible task for SSH setup)
+if [ ! -f "$SSH_PRIVATE_KEY" ]; then
+  echo "SSH private key not found at $SSH_PRIVATE_KEY"
+  exit 1
+fi
+
+# Create backup directory on the storage box (only if it doesn't exist already)
+ssh -i "$SSH_PRIVATE_KEY" -p "$STORAGE_BOX_PORT" "$STORAGE_BOX_USER"@"$FULL_HOST" \
+  "mkdir -p $STORAGE_BOX_TARGET_DIR"
+
+# Sync local backup directory to the storage box using rsync
+rsync --progress --delete -e "ssh -i $SSH_PRIVATE_KEY -p $STORAGE_BOX_PORT" \
+  -r "$LOCAL_BACKUP_DIR" "$STORAGE_BOX_USER"@"$FULL_HOST":"$STORAGE_BOX_TARGET_DIR"
+
+# Optional: Log output (you could redirect stdout and stderr to a log file for later debugging)
+echo "$(date): Backup completed" >> /var/log/backup.log

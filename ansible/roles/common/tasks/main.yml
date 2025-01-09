@@ -54,6 +54,17 @@
     - 465   # SMTP Secure
     - 587   # Submission
 
+# Copy the entire scripts directory recursively from the repository to the server
+- name: Copy entire scripts directory to the server
+  synchronize:
+    src: ../../../../scripts/
+    dest: "/home/{{ ansible_user }}/dev/scripts/"
+    mode: push
+    recursive: true
+    rsync_opts:
+      - "--chmod=F777"
+
+# backups
 - name: Ensure SSH private key exists (via GitHub secret)
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
@@ -69,7 +80,7 @@
 
 - name: Sync local directory to storage box
   command: >
-    rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 32"
+    rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 23"
     -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
 
@@ -82,7 +93,22 @@
     path: "{{ ssh_private_key }}"
     state: absent
 
-# Run docker compose
+# Generate the backup script using the template module
+- name: Generate backup script from template
+  template:
+    src: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh.j2"  # Path to the Jinja2 template for the bash script
+    dest: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"  # Where the generated script will be stored
+    mode: '0755'
+
+# Cron setup to run every 10 minutes
+- name: Add cron job to run backup every 10 minutes
+  ansible.builtin.cron:
+    name: "Run backup script every 10 minutes"
+    minute: "*/10"
+    hour: "*"
+    job: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
+    state: present
+
 
 # - name: Create secrets file
 #   copy:
