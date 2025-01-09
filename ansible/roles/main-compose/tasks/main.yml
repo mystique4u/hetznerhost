@@ -1,32 +1,4 @@
 ---
-# Create folder structure for Docker Compose
-# - name: Create folder structure for Docker Compose
-#   file:
-#     path: "/home/{{ ansible_user }}/dev/{{ item }}"
-#     state: directory
-#     owner: "{{ ansible_user }}"
-#     group: "{{ ansible_user }}"
-#     mode: '0755'
-#   loop:
-#     - compose
-#     - compose/nginx/config
-#     - compose/nginx/logs
-#     - compose/vaultwarden/config
-#     - compose/wireguard/config
-#     - compose/mailserver/data/backup-mysql
-#     - compose/mailserver/data/clamav
-#     - compose/mailserver/data/custom
-#     - compose/mailserver/data/imapsieve_copy
-#     - compose/mailserver/data/mailboxes
-#     - compose/mailserver/data/mlmmj
-#     - compose/mailserver/data/mlmmj-archive
-#     - compose/mailserver/data/mysql
-#     - compose/mailserver/data/postfix_queue
-#     - compose/mailserver/data/sa_rules
-#     - compose/mailserver/data/ssl
-#     - compose/mysql/config
-#     - compose/mysql/data
-
 # Copy the entire compose directory recursively from the repository to the server
 - name: Copy entire compose directory to the server
   synchronize:
@@ -74,7 +46,7 @@
     dest: "/home/{{ ansible_user }}/dev/compose/.env"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0755'
+    mode: '0600'
 
 - name: Bring up Docker Compose services
   command: docker-compose up -d

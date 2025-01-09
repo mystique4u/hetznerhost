@@ -3,8 +3,16 @@
   hosts: all
   become: true
 
+  vars:
+    storage_box_user: "{{ lookup('env', 'STORAGE_BOX_USER') }}"
+    storage_box_host: "{{ lookup('env', 'STORAGE_BOX_HOST') }}"
+    ssh_private_key: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
+    storage_box_target_dir: "backups/hetznerhost"  # Remote directory
+    local_backup_dir: "/home/{{ ansible_user }}/dev/"
+    ssh_private_key: "/tmp/ssh_key"
+
   roles:
     - common        # OS updates and base tools
-    - devtools      # Dev tools like Git, Neovim
-    - docker        # Docker and Docker Compose
-    - main-compose       # main compose file
+#    - devtools      # Dev tools like Git, Neovim
+#    - docker        # Docker and Docker Compose
+#    - main-compose       # main compose file

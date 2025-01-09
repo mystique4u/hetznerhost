@@ -54,6 +54,34 @@
     - 465   # SMTP Secure
     - 587   # Submission
 
+- name: Ensure SSH private key exists (via GitHub secret)
+  copy:
+    content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
+    dest: "{{ ssh_private_key }}"
+    mode: '0600'
+
+- name: Create backup directory on hetzners storage box
+  shell: >
+    ssh -i {{ ssh_private_key }} -p 23
+    {{ storage_box_user }}@{{ storage_box_user }}.{{ storage_box_host }}
+    "mkdir -p {{ storage_box_target_dir }}"
+  ignore_errors: yes
+
+- name: Sync local directory to storage box
+  command: >
+    rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 32"
+    -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_host }}:{{ storage_box_target_dir }}
+  register: rsync_output
+
+- name: Output rsync results
+  debug:
+    var: rsync_output.stdout
+
+- name: Clean up SSH key
+  file:
+    path: "{{ ssh_private_key }}"
+    state: absent
+
 # Run docker compose
 
 # - name: Create secrets file

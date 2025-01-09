@@ -131,7 +131,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+  
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
@@ -162,4 +162,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           COMPOSE_ENV: ${{ secrets.COMPOSE_ENV }}
+          STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
+          STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
+          STORAGE_BOX_SSH_KEY: ${{ secrets.STORAGE_BOX_SSH_KEY }}
         working-directory: ./ansible
