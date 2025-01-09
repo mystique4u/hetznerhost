@@ -71,17 +71,17 @@
     dest: "{{ ssh_private_key }}"
     mode: '0600'
 
-- name: Create backup directory on hetzners storage box
+- name: Create backup directory on Hetzner's storage box
   shell: >
     ssh -i {{ ssh_private_key }} -p 23
-    {{ storage_box_user }}@{{ storage_box_user }}.{{ storage_box_host }}
+    {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}
     "mkdir -p {{ storage_box_target_dir }}"
   ignore_errors: yes
 
 - name: Sync local directory to storage box
   command: >
     rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 23"
-    -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_host }}:{{ storage_box_target_dir }}
+    -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
 
 - name: Output rsync results
