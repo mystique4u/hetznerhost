@@ -154,10 +154,10 @@
     msg: "The local backup directory '{{ local_backup_dir }}' does not exist. Skipping backup sync."
   when: not backup_dir_stat.stat.exists
 
-- name: Clean up SSH key
-  file:
-    path: "{{ ssh_private_key }}"
-    state: absent
+# - name: Clean up SSH key
+#   file:
+#     path: "{{ ssh_private_key }}"
+#     state: absent
 
 # Generate the backup script using the template module
 - name: Generate backup script from template
