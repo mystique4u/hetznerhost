@@ -102,17 +102,17 @@
 ### MOUNT REMOTE DISK
 - name: Ensure the ~/mount directory exists
   file:
-    path: ~/mount
+    path: "/home/{{ ansible_user }}/storagebox"
     state: directory
     mode: '0755'
 
 - name: Check if the SSHFS mount is already present
-  command: mountpoint ~/mount
+  command: mountpoint "/home/{{ ansible_user }}/storagebox"
   register: sshfs_mount_check
   ignore_errors: true
 
 - name: Mount SSHFS directory if not mounted
-  command: sshfs -o IdentityFile={{ ssh_private_key }} u328253@u328253.your-storagebox.de/:/ ~/mount
+  command: sshfs -o IdentityFile={{ ssh_private_key }} u328253@u328253.your-storagebox.de/:/ "/home/{{ ansible_user }}/storagebox"
   when: sshfs_mount_check.rc != 0
 
 ### BACKUPS
