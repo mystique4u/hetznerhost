@@ -69,7 +69,9 @@
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
     dest: "{{ ssh_private_key }}"
-    mode: '0644'
+    mode: '0600'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
 
 - name: Create backup directory on Hetzner's storage box
   shell: >
