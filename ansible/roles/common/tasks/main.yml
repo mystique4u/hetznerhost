@@ -54,6 +54,32 @@
     - 465   # SMTP Secure
     - 587   # Submission
 
+### SOME GIT FOLDERS SYNCHRONISATION
+
+# Copy the entire compose directory recursively from the repository to the server
+- name: Copy entire compose directory to the server
+  synchronize:
+    src: ../../../../compose/   # This is the source directory in the repo
+    dest: "/home/{{ ansible_user }}/dev/compose/"
+    mode: push
+    recursive: true
+    rsync_opts:
+      - "--chmod=F644"
+
+- name: Set write permission for all users on specific folders and their contents
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0777'
+    recurse: true
+  loop:
+    - "/home/{{ ansible_user }}/dev/compose/odoo"
+    - "/home/{{ ansible_user }}/dev/compose/db"
+
+- name: Ensure acme.json has 600 permissions
+  file:
+    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    mode: '0600'
+
 # Copy the entire scripts directory recursively from the repository to the server
 - name: Copy entire scripts directory to the server
   synchronize:
@@ -64,7 +90,7 @@
     rsync_opts:
       - "--chmod=F777"
 
-# backups
+### BACKUPS
 - name: Ensure SSH private key exists (via GitHub secret)
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
@@ -78,7 +104,6 @@
     ssh -i {{ ssh_private_key }} -p 23
     {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}
     "mkdir -p {{ storage_box_target_dir }}"
-  ignore_errors: yes
 
 # Check if the local backup directory exists
 - name: Check if the local backup directory exists
@@ -99,10 +124,6 @@
   debug:
     msg: "The local backup directory '{{ local_backup_dir }}' does not exist. Skipping backup sync."
   when: not backup_dir_stat.stat.exists
-
-- name: Output rsync results
-  debug:
-    var: rsync_output.stdout
 
 - name: Clean up SSH key
   file:

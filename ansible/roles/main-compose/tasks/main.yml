@@ -1,27 +1,4 @@
 ---
-# Copy the entire compose directory recursively from the repository to the server
-- name: Copy entire compose directory to the server
-  synchronize:
-    src: ../../../../compose/   # This is the source directory in the repo
-    dest: "/home/{{ ansible_user }}/dev/compose/"
-    mode: push
-    recursive: true
-    rsync_opts:
-      - "--chmod=F644"
-
-- name: Set write permission for all users on specific folders and their contents
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: '0777'
-    recurse: yes
-  loop:
-    - "/home/{{ ansible_user }}/dev/compose/odoo"
-    - "/home/{{ ansible_user }}/dev/compose/db"
-
-- name: Ensure acme.json has 600 permissions
-  file:
-    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
-    mode: '0600'
 
 # - name: Set executable permissions for all .sh scripts in the scripts folder
 #   ansible.builtin.find:
