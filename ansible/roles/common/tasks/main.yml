@@ -101,8 +101,8 @@
     group: "{{ ansible_user }}"
 
 ### MOUNT REMOTE DISK
-- name: Ensure the ~/mount directory exists
-  file:
+- name: Create ~/mount directory if it doesn't exist
+  ansible.builtin.file:
     path: "/home/{{ ansible_user }}/storagebox"
     state: directory
     mode: '0755'
