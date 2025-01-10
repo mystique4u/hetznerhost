@@ -136,19 +136,13 @@
     path: "{{ local_backup_dir }}"
   register: backup_dir_stat
 
-- name: Sync local directory to storage box using rsync
-  ansible.builtin.synchronize:
-    src: "{{ local_backup_dir }}/"
-    dest: "{{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}"
-    mode: push
-    recursive: true
-    delete: true
-    rsync_opts:
-      - "--rsh=ssh -i {{ ssh_private_key }} -p 23 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+- name: Sync local directory to storage box
+  command: >
+    rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 23"
+    -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
-  changed_when: rsync_output.rc == 0
-  failed_when: rsync_output.rc != 0
   when: backup_dir_stat.stat.exists
+
 
 # Log a message if the local backup directory is missing
 - name: Log a message if the local backup directory is missing
