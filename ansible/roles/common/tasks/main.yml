@@ -19,6 +19,7 @@
     - lsb-release
     - software-properties-common
     - mc
+    - sshfs
 
 # Enable IP forwarding for WireGuard VPN
 - name: Enable IP forwarding for WireGuard VPN
@@ -90,7 +91,6 @@
     rsync_opts:
       - "--chmod=F777"
 
-### BACKUPS
 - name: Ensure SSH private key exists (via GitHub secret)
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
@@ -98,6 +98,24 @@
     mode: '0600'
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+
+### MOUNT REMOTE DISK
+- name: Ensure the ~/mount directory exists
+  file:
+    path: ~/mount
+    state: directory
+    mode: '0755'
+
+- name: Check if the SSHFS mount is already present
+  command: mountpoint ~/mount
+  register: sshfs_mount_check
+  ignore_errors: yes
+
+- name: Mount SSHFS directory if not mounted
+  command: sshfs -o IdentityFile={{ ssh_private_key }} u328253@u328253.your-storagebox.de/:/ ~/mount
+  when: sshfs_mount_check.rc != 0
+
+### BACKUPS
 
 - name: Create backup directory on Hetzner's storage box
   shell: >
