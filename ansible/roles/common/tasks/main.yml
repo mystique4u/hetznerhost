@@ -105,6 +105,8 @@
     path: "/home/{{ ansible_user }}/storagebox"
     state: directory
     mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
 
 - name: Check if the SSHFS mount is already present
   ansible.builtin.command: mountpoint "/home/{{ ansible_user }}/storagebox"
