@@ -109,7 +109,7 @@
 - name: Check if the SSHFS mount is already present
   command: mountpoint ~/mount
   register: sshfs_mount_check
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Mount SSHFS directory if not mounted
   command: sshfs -o IdentityFile={{ ssh_private_key }} u328253@u328253.your-storagebox.de/:/ ~/mount
