@@ -113,7 +113,7 @@
   failed_when: sshfs_mount_check.rc != 0 and sshfs_mount_check.stderr != ""
 
 - name: Mount SSHFS directory if not mounted
-  command: sshfs -o IdentityFile={{ ssh_private_key }} u328253@u328253.your-storagebox.de:/ "/home/{{ ansible_user }}/storagebox"
+  command: sshfs -o IdentityFile={{ ssh_private_key }} -p 23 u328253@u328253.your-storagebox.de:/ "/home/{{ ansible_user }}/storagebox"
   when: sshfs_mount_check.rc != 0
 
 ### BACKUPS
