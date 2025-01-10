@@ -69,7 +69,7 @@
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
     dest: "{{ ssh_private_key }}"
-    mode: '0600'
+    mode: '0644'
 
 - name: Create backup directory on Hetzner's storage box
   shell: >
