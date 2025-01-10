@@ -8,7 +8,7 @@
     storage_box_host: "{{ lookup('env', 'STORAGE_BOX_HOST') }}"
     ssh_private_key: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
     ansible_user: "{{ lookup('env', 'SUDO_USER') }}"
-    storage_box_target_dir: "backups/hetznerhost"  # Remote directory
+    storage_box_target_dir: "backups/hosts/hetznerhost"  # Remote directory
     local_backup_dir: "/home/{{ ansible_user }}/dev/"
     ssh_private_key: "/tmp/ssh_key"
 
