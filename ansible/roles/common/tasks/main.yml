@@ -80,11 +80,25 @@
     "mkdir -p {{ storage_box_target_dir }}"
   ignore_errors: yes
 
+# Check if the local backup directory exists
+- name: Check if the local backup directory exists
+  stat:
+    path: "{{ local_backup_dir }}"
+  register: backup_dir_stat
+
+# Sync local directory to storage box (only if the directory exists)
 - name: Sync local directory to storage box
   command: >
     rsync --progress --delete -e "ssh -i {{ ssh_private_key }} -p 23"
     -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
+  when: backup_dir_stat.stat.exists
+
+# Log a message if the local backup directory is missing
+- name: Log a message if the local backup directory is missing
+  debug:
+    msg: "The local backup directory '{{ local_backup_dir }}' does not exist. Skipping backup sync."
+  when: not backup_dir_stat.stat.exists
 
 - name: Output rsync results
   debug:
