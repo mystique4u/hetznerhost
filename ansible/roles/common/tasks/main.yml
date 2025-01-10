@@ -20,6 +20,7 @@
     - software-properties-common
     - mc
     - sshfs
+    - rsync
 
 # Enable IP forwarding for WireGuard VPN
 - name: Enable IP forwarding for WireGuard VPN
@@ -143,13 +144,11 @@
     recursive: true
     delete: true
     rsync_opts:
-      - "-e"
-      - "ssh -i {{ ssh_private_key }} -p 23"
+      - "--rsh=ssh -i {{ ssh_private_key }} -p 23 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
   register: rsync_output
-  changed_when: rsync_output.returncode == 0
-  failed_when: rsync_output.returncode != 0
+  changed_when: rsync_output.rc == 0
+  failed_when: rsync_output.rc != 0
   when: backup_dir_stat.stat.exists
-
 
 # Log a message if the local backup directory is missing
 - name: Log a message if the local backup directory is missing
