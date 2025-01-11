@@ -71,7 +71,7 @@ jobs:
           echo "Domains extracted: $DOMAINS"
       
           # Write domains to a file for further processing
-          echo "$DOMAINS" > ../domains.txt
+          echo "$DOMAINS" > ./domains.txt
         working-directory: ./compose  # Set working directory to compose/
   
       - name: Check and create domains using Hetzner API
@@ -112,8 +112,8 @@ jobs:
             else
               echo "A record for domain $DOMAIN already exists. Skipping creation."
             fi
-          done < domains.txt
-        working-directory: ./  # Set working directory to root (or where domains.txt is saved)
+          done < ./domains.txt
+        working-directory: ./compose  # Set working directory to root (or where domains.txt is saved)
 
   ansible:
     name: Configure VM with Ansible
