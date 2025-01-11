@@ -128,7 +128,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y ansible python3-pip
           pip3 install ansible
-          ip3 install docker
+          pip3 install docker
 
       # Install required Ansible collections, including community.docker
       - name: Install Ansible collections
