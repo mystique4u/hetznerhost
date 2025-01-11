@@ -1,25 +1,16 @@
 ---
-### Debug
-- name: Pull the latest Docker image
-  community.docker.docker_image:
-    name: nginx
-    pull: true
-
 - name: Stop Docker Compose services
   community.docker.docker_compose_v2:
     project_src: "/home/{{ ansible_user }}/dev/compose/"
     command: down
     remove_orphans: true
 
-- name: Stop and remove all Docker containers
-  community.docker.docker_container_prune:
-    force: true
-
-- name: Remove all Docker networks (including unused)
-  community.docker.docker_network_prune:
-    force: true
-
-- name: Remove all unused Docker images
-  community.docker.docker_image_prune:
-    all: true
-    force: true
+- name: Prune everything (including non-dangling images)
+  community.docker.docker_prune:
+    containers: yes
+    images: yes
+    images_filters:
+      dangling: false
+    networks: yes
+    volumes: yes
+    builder_cache: yes
