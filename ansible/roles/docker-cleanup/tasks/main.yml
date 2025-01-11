@@ -1,6 +1,6 @@
 ---
 - name: Stop Docker Compose services
-  ansible.builtin.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "/home/{{ ansible_user }}/dev/compose/"
     command: down
     remove_orphans: true
