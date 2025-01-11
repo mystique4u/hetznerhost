@@ -317,6 +317,9 @@ services:
       - main-net
     depends_on:
       - cadvisor
+    links:
+      - cadvisor:cadvisor
+      - node-exporter:node-exporter
 
 
   grafana:
@@ -359,6 +362,8 @@ services:
       - /dev/disk/:/dev/disk:ro
     ports:
       - "8080:8080"
+    networks:
+      - main-net
   
   node_exporter:
     image: prom/node-exporter:latest

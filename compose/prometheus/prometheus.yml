@@ -12,7 +12,7 @@ scrape_configs:
   - job_name: 'docker'
     scrape_interval: 10s
     static_configs:
-      - targets: ['cadvisor:8080', 'prometheus:9090']  # Add cAdvisor and Prometheus as scrape targets
+      - targets: ['cadvisor:8080', 'localhost:9090']  # Add cAdvisor and Prometheus as scrape targets
 
   - job_name: 'node_exporter'  # Job name for monitoring the host system
     static_configs:
