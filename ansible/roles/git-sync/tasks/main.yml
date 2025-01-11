@@ -1,16 +1,33 @@
 ---
 ### SOME GIT FOLDERS SYNCHRONISATION
-
-# Copy the entire compose directory recursively from the repository to the server
-- name: Copy entire compose directory to the server
+# Copy the entire compose directory recursively from the repository to the server, excluding acme.json
+- name: Copy entire compose directory to the server, excluding acme.json
   synchronize:
-    src: ../../../../compose/   # This is the source directory in the repo
+    src: ../../../../compose/
     dest: "/home/{{ ansible_user }}/dev/compose/"
     mode: push
     recursive: true
     rsync_opts:
       - "--chmod=F644"
+      - "--exclude=traefik/acme.json"  # Exclude acme.json from synchronization
 
+# Check if acme.json already exists on the server
+- name: Check if acme.json exists on the server
+  stat:
+    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+  register: acme_file_stat
+
+# Copy acme.json to the server only if it doesn't exist
+- name: Copy acme.json if it does not exist on the server
+  synchronize:
+    src: ../../../../compose/traefik/acme.json
+    dest: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    mode: push
+    rsync_opts:
+      - "--chmod=F600"
+  when: not acme_file_stat.stat.exists
+
+# Set write permission for all users on specific folders and their contents
 - name: Set write permission for all users on specific folders and their contents
   ansible.builtin.file:
     path: "{{ item }}"
@@ -20,6 +37,7 @@
     - "/home/{{ ansible_user }}/dev/compose/odoo"
     - "/home/{{ ansible_user }}/dev/compose/db"
 
+# Ensure acme.json has 600 permissions (just in case)
 - name: Ensure acme.json has 600 permissions
   file:
     path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"

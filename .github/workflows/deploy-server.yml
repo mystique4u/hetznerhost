@@ -51,77 +51,72 @@ jobs:
           echo "Public IP from Terraform: $public_ip"
           echo "public_ip=$public_ip" >> $GITHUB_OUTPUT
         working-directory: ./terraform
+
+  manage_domains:
+    name: Manage Domains with Hetzner API
+    runs-on: ubuntu-latest
+    needs: terraform
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
   
-  # manage_domains:
-  #   name: Manage Domains with Hetzner API
-  #   runs-on: ubuntu-latest
-  #   needs: terraform
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-
-  #     - name: Install curl and jq
-  #       run: sudo apt-get install -y curl jq
-
-  #     - name: Create a list of domains from Nginx configs
-  #       run: |
-  #         # Find all domain config files (domain.name.conf) in the domains folder
-  #         DOMAIN_FILES=$(find ./compose/nginx/config/domains -type f -name "*.conf")
-  #         echo "Found domain config files: $DOMAIN_FILES"
-          
-  #         # Extract domain names from the config files, removing .conf extension and everything after the first dot (.)
-  #         DOMAINS=$(echo "$DOMAIN_FILES" | sed -E 's|^./compose/nginx/config/domains/(.*)\.conf|\1|' | sed 's/\..*//')
-  #         echo "Domains to check and create: $DOMAINS"
-          
-  #         # Write the domains to a file for further processing
-  #         echo "$DOMAINS" > domains.txt
-  #       working-directory: ./  # Set working directory to root (or where the domains folder exists)
-
-  #     - name: Check and create domains using Hetzner API
-  #       run: |
-  #         echo "Starting domain management process..."
-  #         while read DOMAIN; do
-  #           # Clean up the domain name to ensure it's in the right format (remove leading './' if necessary)
-  #           CLEANED_DOMAIN=$(echo "$DOMAIN" | sed 's/^\.\///')
-            
-  #           echo "Processing domain: $CLEANED_DOMAIN"
-
-  #           # API endpoint and token for Hetzner DNS
-  #           HETZNER_API="https://dns.hetzner.com/api/v1"
-  #           API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
-  #           SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
-  #           ZONE_ID="${{ secrets.DNS_ZONE }}"
-
-  #           echo "API Token: $API_TOKEN"
-  #           echo "Zone ID: $ZONE_ID"
-  #           echo "Server IP: $SERVER_IP"
-
-  #           # Check if the A record already exists for the domain
-  #           EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$CLEANED_DOMAIN\" and .type == \"A\")")
-
-  #           if [ -z "$EXISTING_RECORD" ]; then
-  #             echo "Domain $CLEANED_DOMAIN does not have an A record. Creating it..."
+      - name: Install dependencies
+        run: sudo apt-get install -y curl jq
+  
+      - name: Extract domain names from Traefik labels in docker-compose.yml
+        run: |
+          # Navigate to the compose directory
+          cd compose
+  
+          # Extract domains from Traefik labels in docker-compose.yml
+          DOMAINS=$(grep -oP "traefik\.http\.routers\.\w+\.rule=Host\(`\K[^\)`]+" docker-compose.yml | sed 's/\..*//')
+          echo "Domains extracted: $DOMAINS"
+  
+          # Write domains to a file for further processing
+          echo "$DOMAINS" > ../domains.txt
+        working-directory: ./compose  # Set working directory to compose/
+  
+      - name: Check and create domains using Hetzner API
+        run: |
+          echo "Starting domain management process..."
+          while read DOMAIN; do
+            echo "Processing domain: $DOMAIN"
+  
+            # API endpoint and token for Hetzner DNS
+            HETZNER_API="https://dns.hetzner.com/api/v1"
+            API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
+            SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
+            ZONE_ID="${{ secrets.DNS_ZONE }}"
+  
+            echo "API Token: $API_TOKEN"
+            echo "Zone ID: $ZONE_ID"
+            echo "Server IP: $SERVER_IP"
+  
+            # Check if the A record already exists for the domain
+            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$DOMAIN\" and .type == \"A\")")
+  
+            if [ -z "$EXISTING_RECORD" ]; then
+              echo "Domain $DOMAIN does not have an A record. Creating it..."
               
-  #             # Create the new A record for the domain
-  #             CREATE_RECORD_RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
-  #               -H "Content-Type: application/json" \
-  #               -H "Auth-API-Token: $API_TOKEN" \
-  #               -d "{
-  #                 \"value\": \"$SERVER_IP\",
-  #                 \"ttl\": 86400,
-  #                 \"type\": \"A\",
-  #                 \"name\": \"$CLEANED_DOMAIN\",
-  #                 \"zone_id\": \"$ZONE_ID\"
-  #               }")
-
-  #             echo "A record for domain $CLEANED_DOMAIN created successfully"
-  #           else
-  #             echo "A record for domain $CLEANED_DOMAIN already exists. Skipping creation."
-  #           fi
-  #         done < domains.txt
-  #       working-directory: ./  # Set working directory to root (or where the domains folder exists)
-
+              # Create the new A record for the domain
+              CREATE_RECORD_RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
+                -H "Content-Type: application/json" \
+                -H "Auth-API-Token: $API_TOKEN" \
+                -d "{
+                  \"value\": \"$SERVER_IP\",
+                  \"ttl\": 86400,
+                  \"type\": \"A\",
+                  \"name\": \"$DOMAIN\",
+                  \"zone_id\": \"$ZONE_ID\"
+                }")
+  
+              echo "A record for domain $DOMAIN created successfully"
+            else
+              echo "A record for domain $DOMAIN already exists. Skipping creation."
+            fi
+          done < domains.txt
+        working-directory: ./  # Set working directory to root (or where domains.txt is saved)
 
   ansible:
     name: Configure VM with Ansible
