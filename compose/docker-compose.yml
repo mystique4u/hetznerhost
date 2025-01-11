@@ -341,7 +341,7 @@ services:
     volumes:
       - "./alertmanager/:/etc/alertmanager/"
     networks:
-      - monitor-net
+      - main-net
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
