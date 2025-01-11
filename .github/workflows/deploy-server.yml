@@ -72,6 +72,8 @@ jobs:
       
           # Write domains to a file for further processing
           echo "$DOMAINS" > ./domains.txt
+          # debug
+          cat ./domains.txt
         working-directory: ./compose  # Set working directory to compose/
   
       - name: Check and create domains using Hetzner API
