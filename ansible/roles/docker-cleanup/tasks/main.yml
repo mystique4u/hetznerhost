@@ -1,9 +1,4 @@
 ---
-- name: Tear down existing services
-  community.docker.docker_compose_v2:
-    project_src: "/home/{{ ansible_user }}/dev/compose/"
-    state: absent
-
 - name: Prune everything (including non-dangling images)
   community.docker.docker_prune:
     containers: yes
