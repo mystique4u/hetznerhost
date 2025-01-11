@@ -319,7 +319,7 @@ services:
       - cadvisor
     links:
       - cadvisor:cadvisor
-      - node-exporter:node-exporter
+      - node_exporter:node_exporter
 
 
   grafana:
