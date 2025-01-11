@@ -67,8 +67,7 @@ jobs:
       - name: Extract domain names from Traefik labels in docker-compose.yml
         run: |
           # Extract domains from Traefik labels in docker-compose.yml
-          # This regular expression doesn't use \K and is simpler for compatibility
-          DOMAINS=$(grep -o "traefik\.http\.routers\.[a-zA-Z0-9-]*\.rule=Host\(`\([^)]*\)\`" docker-compose.yml | sed -E 's/.*Host\(`([a-zA-Z0-9.-]*)\`.*$/\1/' | sed 's/\..*//')
+          DOMAINS=$(grep -oP 'traefik\.http\.routers\.\w+\.rule=Host\(\`[^\`]+\`' docker-compose.yml | sed 's/.*Host(\`//;s/\`.*//;s/\..*//')
           echo "Domains extracted: $DOMAINS"
       
           # Write domains to a file for further processing
@@ -119,7 +118,7 @@ jobs:
   ansible:
     name: Configure VM with Ansible
     runs-on: ubuntu-latest
-    needs: terraform
+    needs: [terraform, manage_domains]
 
     steps:
       - name: Checkout repository
