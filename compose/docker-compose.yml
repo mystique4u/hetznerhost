@@ -327,9 +327,9 @@ services:
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   cadvisor:
-    image: google/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
-    privileged: true
+    privileged: true  # Run in privileged mode to allow full access to host resources
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /sys:/sys
