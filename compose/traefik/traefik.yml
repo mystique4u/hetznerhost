@@ -30,3 +30,16 @@ certificatesResolvers:
 providers:
   docker:
     exposedByDefault: false
+    swarmMode: true       # Added for Docker Swarm Mode
+    watch: true           # Enable watching for changes
+
+metrics:
+  prometheus:
+    buckets:              # Define Prometheus histogram buckets
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+
+log:
+  level: DEBUG            # Set log level to DEBUG
