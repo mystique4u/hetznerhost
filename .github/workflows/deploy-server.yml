@@ -124,13 +124,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
   
-      - name: Install Ansible
-        run: sudo apt update && sudo apt install -y ansible python3-pip
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y ansible python3-pip
+          pip3 install ansible
 
       # Install required Ansible collections, including community.docker
       - name: Install Ansible collections
         run: |
-          pip3 install ansible
           ansible-galaxy collection install community.docker
 
       - name: Add Private SSH Key for Ansible
