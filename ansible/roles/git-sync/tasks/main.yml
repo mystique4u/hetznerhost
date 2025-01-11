@@ -36,6 +36,8 @@
   loop:
     - "/home/{{ ansible_user }}/dev/compose/odoo"
     - "/home/{{ ansible_user }}/dev/compose/db"
+    - "/home/{{ ansible_user }}/dev/compose/prometheus"
+    - "/home/{{ ansible_user }}/dev/compose/grafana"
 
 # Ensure acme.json has 600 permissions (just in case)
 - name: Ensure acme.json has 600 permissions

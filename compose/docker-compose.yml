@@ -329,10 +329,15 @@ services:
   cadvisor:
     image: google/cadvisor:latest
     container_name: cadvisor
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys:/sys
+      - /proc:/proc
+      - /dev:/dev
+      - /:/rootfs
     ports:
-      - "8080:8080"  # Expose locally if you need to access cAdvisor via localhost
-    networks:
-      - main-net
+      - "8080:8080"
   
   node_exporter:
     image: prom/node-exporter:latest
