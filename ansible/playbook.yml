@@ -17,6 +17,6 @@
     - cron            # adding different crontabs to host
 #   - docker          # Installs Docker and Docker Compose
     - git-sync        # different folder synchronisation from you git repo to your host
-#   - docker-cleanup  # Cleanup Docker before deploying
-#   - main-compose    # Deploys "main" docker compose file
+    - docker-cleanup  # Cleanup Docker before deploying
+    - main-compose    # Deploys "main" docker compose file
 #   - storagemount    # optional mount hetznter storagebox for developer navigation

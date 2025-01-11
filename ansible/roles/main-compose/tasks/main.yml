@@ -9,9 +9,9 @@
     group: "{{ ansible_user }}"
     mode: '0600'
 
-- name: Bring up Docker Compose services
+- name: Bring up Docker Compose services with --remove-orphans
   ansible.builtin.shell: |
-    docker-compose up -d
+    docker-compose up -d --remove-orphans
   args:
     chdir: "/home/{{ ansible_user }}/dev/compose/"
   register: compose_output
