@@ -6,14 +6,14 @@
     remove_orphans: true
 
 - name: Stop and remove all Docker containers
-  ansible.builtin.docker_container_prune:
+  community.docker.docker_container_prune:
     force: true
 
 - name: Remove all Docker networks (including unused)
-  ansible.builtin.docker_network_prune:
+  community.docker.docker_network_prune:
     force: true
 
 - name: Remove all unused Docker images
-  ansible.builtin.docker_image_prune:
+  community.docker.docker_image_prune:
     all: true
     force: true
