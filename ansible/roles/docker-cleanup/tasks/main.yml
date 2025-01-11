@@ -1,4 +1,10 @@
 ---
+### Debug
+- name: Pull the latest Docker image
+  community.docker.docker_image:
+    name: nginx
+    pull: true
+
 - name: Stop Docker Compose services
   community.docker.docker_compose_v2:
     project_src: "/home/{{ ansible_user }}/dev/compose/"
