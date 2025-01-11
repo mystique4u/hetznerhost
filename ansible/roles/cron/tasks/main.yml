@@ -1,0 +1,9 @@
+---
+# Cron setup to run every 10 minutes
+- name: Add cron job to run backup every 10 minutes
+  ansible.builtin.cron:
+    name: "Run backup script every 10 minutes"
+    minute: "*/10"
+    hour: "*"
+    job: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
+    state: present

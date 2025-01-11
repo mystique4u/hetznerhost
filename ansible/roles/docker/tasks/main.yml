@@ -38,22 +38,3 @@
 - name: Display Docker Compose version
   debug:
     msg: "Docker Compose version: {{ docker_compose_version.stdout }}"
-
-- name: Stop Docker Compose services
-  ansible.builtin.docker_compose:
-    project_src: "/home/{{ ansible_user }}/dev/compose/"
-    command: down
-    remove_orphans: true
-
-- name: Stop and remove all Docker containers
-  ansible.builtin.docker_container_prune:
-    force: true
-
-- name: Remove all Docker networks (including unused)
-  ansible.builtin.docker_network_prune:
-    force: true
-
-- name: Remove all unused Docker images
-  ansible.builtin.docker_image_prune:
-    all: true
-    force: true

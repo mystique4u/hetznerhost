@@ -9,10 +9,14 @@
     ansible_user: "{{ lookup('env', 'SUDO_USER') }}"
     storage_box_target_dir: "backups/hosts/hetznerhost"  # Remote directory
     local_backup_dir: "/home/{{ ansible_user }}/dev/"
-    ssh_private_key: "/tmp/storagebox_ssh_key"
+    ssh_private_key_path: "/tmp/storagebox_ssh_key"
 
   roles:
-    - common        # OS updates and base tools
-#    - devtools      # Dev tools like Git, Neovim
-#    - docker        # Docker and Docker Compose
-#    - main-compose       # main compose file
+    - common          # OS updates and base tools
+    - backup          # backup to hetzner storagebox
+    - cron            # adding different crontabs to host
+#   - docker          # Installs Docker and Docker Compose
+    - git-sync        # different folder synchronisation from you git repo to your host
+#   - docker-cleanup  # Cleanup Docker before deploying
+#   - main-compose    # Deploys "main" docker compose file
+#   - storagemount    # optional mount hetznter storagebox for developer navigation

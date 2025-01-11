@@ -6,7 +6,7 @@ STORAGE_BOX_USER="{{ storage_box_user }}"
 STORAGE_BOX_PORT=23
 STORAGE_BOX_TARGET_DIR="{{ storage_box_target_dir }}"
 LOCAL_BACKUP_DIR="{{ local_backup_dir }}"
-SSH_PRIVATE_KEY="{{ ssh_private_key }}"
+SSH_PRIVATE_KEY="{{ ssh_private_key_path }}"
 FULL_HOST="$STORAGE_BOX_USER.$STORAGE_BOX_HOST"
 
 # Ensure SSH private key exists (this should match your Ansible task for SSH setup)
