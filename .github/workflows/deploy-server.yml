@@ -128,11 +128,13 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y ansible python3-pip
           pip3 install ansible
+          ip3 install docker
 
       # Install required Ansible collections, including community.docker
       - name: Install Ansible collections
         run: |
-          ansible-galaxy collection install community.docker --force
+          ansible-galaxy collection install -r requirements.yml --force
+        working-directory: ./ansible
 
       - name: Add Private SSH Key for Ansible
         run: |
