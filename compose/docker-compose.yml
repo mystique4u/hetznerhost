@@ -330,12 +330,16 @@ services:
     image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
     privileged: true  # Run in privileged mode to allow full access to host resources
+    restart: unless-stopped
+    devices:
+      - "/dev/kmsg:/dev/kmsg"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /sys:/sys
-      - /proc:/proc
-      - /dev:/dev
-      - /:/rootfs
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
     ports:
       - "8080:8080"
   
