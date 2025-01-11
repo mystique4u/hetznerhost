@@ -297,28 +297,6 @@ services:
     depends_on:
       - front
 
-# portainer:
-#   image: portainer/portainer-ce:latest
-#   container_name: portainer
-#   restart: always
-#   command: -H unix:///var/run/docker.sock
-#   environment:
-#     - TZ=UTC
-#   labels:
-#     - "traefik.enable=true"
-#     # Traefik dashboard
-#     - "traefik.http.routers.portainer.rule=Host(`portainer.itin.dev`)"
-#     - "traefik.http.routers.portainer.entrypoints=websecure"
-#     - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
-#     - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-#     - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
-#     - "traefik.http.routers.portainer.middlewares=auth"
-#   volumes:
-#     - /var/run/docker.sock:/var/run/docker.sock
-#     - ./portainer/data:/data
-#   networks:
-#     - main-net
-
 volumes:
   nginx_secrets:
 
