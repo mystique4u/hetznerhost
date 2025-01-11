@@ -63,16 +63,21 @@ jobs:
   
       - name: Install dependencies
         run: sudo apt-get install -y curl jq
-  
+    
       - name: Extract domain names from Traefik labels in docker-compose.yml
         run: |
-          # Extract domains from Traefik labels in docker-compose.yml
-          DOMAINS=$(grep -oP 'traefik\.http\.routers\.\w+\.rule=Host\(\`[^\`]+\`' docker-compose.yml | sed 's/.*Host(\`//;s/\`.*//;s/\..*//')
-          echo "Domains extracted: $DOMAINS"
-      
+          echo "Raw extraction:"
+          grep -oP 'traefik\.http\.routers\.\w+\.rule=Host\(\`([^\`]+)\`' docker-compose.yml
+
+          echo "Domains after processing with sed:"
+          DOMAINS=$(grep -oP 'traefik\.http\.routers\.\w+\.rule=Host\(\`([^\`]+)\`' docker-compose.yml | sed 's/.*Host(\`//;s/\`.*//')
+          echo "$DOMAINS"
+
           # Write domains to a file for further processing
           echo "$DOMAINS" > ./domains.txt
-          # debug
+
+          # Debug to check the contents of domains.txt
+          echo "Contents of domains.txt:"
           cat ./domains.txt
         working-directory: ./compose  # Set working directory to compose/
   
