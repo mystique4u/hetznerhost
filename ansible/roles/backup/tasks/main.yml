@@ -1,44 +1,39 @@
 ---
 ### BACKUPS
-- name: Create backup directory on Hetzner's storage box
-  ansible.builtin.shell: >
-    ssh -i {{ ssh_private_key_path }} -p 23
-    {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}
-    "mkdir -p {{ storage_box_target_dir }}"
-  register: mkdir_output
-  changed_when: "'created' in mkdir_output.stdout or mkdir_output.rc == 0"
-  failed_when: mkdir_output.rc != 0
 
-# Check if the local backup directory exists
-- name: Check if the local backup directory exists
-  stat:
-    path: "{{ local_backup_dir }}"
-  register: backup_dir_stat
-
-- name: Sync local directory to storage box
-  command: >
-    rsync --progress --delete -e "ssh -i {{ ssh_private_key_path }} -p 23"
-    -r {{ local_backup_dir }} {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
-  register: rsync_output
-  when: backup_dir_stat.stat.exists
-
-
-# Log a message if the local backup directory is missing
-- name: Log a message if the local backup directory is missing
-  debug:
-    msg: "The local backup directory '{{ local_backup_dir }}' does not exist. Skipping backup sync."
-  when: not backup_dir_stat.stat.exists
-
-- name: Clean up SSH key
-  file:
-    path: "{{ ssh_private_key_path }}"
-    state: absent
-
-# Generate the backup script using the template module
-- name: Generate backup script from template
-  template:
-    src: backup.sh.j2
-    dest: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"  # Where the generated script will be stored
-    mode: '0755'
+# Create a directory for dev snapshot
+- name: Create dev snapshot directory
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/tmp_backups/dev_snapshot"
+    state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+    mode: '0755'
+
+# Copy the /home/{{ ansible_user }}/dev folder to the snapshot directory
+- name: Copy /home/{{ ansible_user }}/dev folder to snapshot directory
+  ansible.builtin.shell: |
+    rsync -a --delete /home/{{ ansible_user }}/dev/ /home/{{ ansible_user }}/tmp_backups/dev_snapshot/
+  args:
+    executable: /bin/bash
+
+# Compress the snapshot into a tar.gz file
+- name: Create tar.gz backup of dev snapshot
+  ansible.builtin.shell: |
+    tar -czf "/home/{{ ansible_user }}/tmp_backups/backup_$(date +'%Y%m%d%H%M%S').tar.gz" -C "/home/{{ ansible_user }}/tmp_backups/dev_snapshot/" .
+  args:
+    executable: /bin/bash
+
+# Rotate backups to keep only the latest 7 tar.gz files
+- name: Rotate local backups (keep latest 7 backups)
+  ansible.builtin.shell: |
+    ls -t /home/{{ ansible_user }}/tmp_backups/backup_*.tar.gz | tail -n +8 | xargs -r rm
+  args:
+    executable: /bin/bash
+
+# Sync tar.gz backups to storage box
+- name: Sync backups to storage box
+  command: >
+    rsync --progress --delete -e "ssh -i {{ ssh_private_key_path }} -p 23"
+    /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
+  register: rsync_output

@@ -1,9 +1,18 @@
 ---
-# Cron setup to run every 10 minutes
-- name: Add cron job to run backup every 10 minutes
+# Generate the backup script using the template module
+- name: Generate backup script from template
+  template:
+    src: backup.sh.j2
+    dest: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+# Create cron job for the backup script
+- name: Create a cron job for the backup script
   ansible.builtin.cron:
-    name: "Run backup script every 10 minutes"
-    minute: "*/10"
-    hour: "*"
+    name: "Daily Backup Sync"
+    user: "{{ ansible_user }}"
+    minute: "0"
+    hour: "2"  # Runs daily at 2 AM
     job: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
-    state: present

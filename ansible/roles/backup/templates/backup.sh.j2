@@ -1,27 +1,29 @@
 #!/bin/bash
 
-# Define variables using Ansible variables
-STORAGE_BOX_HOST="{{ storage_box_host }}"
+# Define variables
+TMP_BACKUP_DIR="/home/{{ ansible_user }}/tmp_backups"
+DEV_SNAPSHOT_DIR="${TMP_BACKUP_DIR}/dev_snapshot"
+BACKUP_FILE="${TMP_BACKUP_DIR}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
+LOCAL_DEV_DIR="/home/{{ ansible_user }}/dev"
 STORAGE_BOX_USER="{{ storage_box_user }}"
-STORAGE_BOX_PORT=23
+STORAGE_BOX_HOST="{{ storage_box_user ~ '.' ~ storage_box_host }}"
 STORAGE_BOX_TARGET_DIR="{{ storage_box_target_dir }}"
-LOCAL_BACKUP_DIR="{{ local_backup_dir }}"
 SSH_PRIVATE_KEY="{{ ssh_private_key_path }}"
-FULL_HOST="$STORAGE_BOX_USER.$STORAGE_BOX_HOST"
+RSYNC_PORT=23
 
-# Ensure SSH private key exists (this should match your Ansible task for SSH setup)
-if [ ! -f "$SSH_PRIVATE_KEY" ]; then
-  echo "SSH private key not found at $SSH_PRIVATE_KEY"
-  exit 1
-fi
+# Ensure the temporary directories exist
+mkdir -p "$DEV_SNAPSHOT_DIR"
 
-# Create backup directory on the storage box (only if it doesn't exist already)
-ssh -i "$SSH_PRIVATE_KEY" -p "$STORAGE_BOX_PORT" "$STORAGE_BOX_USER"@"$FULL_HOST" \
-  "mkdir -p $STORAGE_BOX_TARGET_DIR"
+# Step 1: Synchronize /home/{{ ansible_user }}/dev to snapshot directory
+rsync -a --delete "$LOCAL_DEV_DIR/" "$DEV_SNAPSHOT_DIR/"
 
-# Sync local backup directory to the storage box using rsync
-rsync --progress --delete -e "ssh -i $SSH_PRIVATE_KEY -p $STORAGE_BOX_PORT" \
-  -r "$LOCAL_BACKUP_DIR" "$STORAGE_BOX_USER"@"$FULL_HOST":"$STORAGE_BOX_TARGET_DIR"
+# Step 2: Create tar.gz archive of the snapshot directory
+tar -czf "$BACKUP_FILE" -C "$DEV_SNAPSHOT_DIR" .
 
-# Optional: Log output (you could redirect stdout and stderr to a log file for later debugging)
-echo "$(date): Backup completed" >> /var/log/backup.log
+# Step 3: Rotate backups (keep only the last 7 tar.gz files)
+ls -t "${TMP_BACKUP_DIR}"/backup_*.tar.gz | tail -n +8 | xargs -r rm
+
+# Step 4: Sync tar.gz backups to the storage box
+rsync --progress --delete -e "ssh -i $SSH_PRIVATE_KEY -p $RSYNC_PORT" "$TMP_BACKUP_DIR/" "${STORAGE_BOX_USER}@${STORAGE_BOX_HOST}:${STORAGE_BOX_TARGET_DIR}"
+
+exit 0
