@@ -65,11 +65,12 @@ jobs:
         run: sudo apt-get install -y curl jq
   
       - name: Extract domain names from Traefik labels in docker-compose.yml
-        run: |  
+        run: |
           # Extract domains from Traefik labels in docker-compose.yml
-          DOMAINS=$(grep -oP "traefik\.http\.routers\.\w+\.rule=Host\(`\K[^\)`]+" docker-compose.yml | sed 's/\..*//')
+          # This regular expression doesn't use \K and is simpler for compatibility
+          DOMAINS=$(grep -o "traefik\.http\.routers\.[a-zA-Z0-9-]*\.rule=Host\(`\([^)]*\)\`" docker-compose.yml | sed -E 's/.*Host\(`([a-zA-Z0-9.-]*)\`.*$/\1/' | sed 's/\..*//')
           echo "Domains extracted: $DOMAINS"
-  
+      
           # Write domains to a file for further processing
           echo "$DOMAINS" > ../domains.txt
         working-directory: ./compose  # Set working directory to compose/
@@ -125,7 +126,13 @@ jobs:
         uses: actions/checkout@v3
   
       - name: Install Ansible
-        run: sudo apt update && sudo apt install -y ansible
+        run: sudo apt update && sudo apt install -y ansible python3-pip
+
+      # Install required Ansible collections, including community.docker
+      - name: Install Ansible collections
+        run: |
+          pip3 install ansible
+          ansible-galaxy collection install community.docker
 
       - name: Add Private SSH Key for Ansible
         run: |
