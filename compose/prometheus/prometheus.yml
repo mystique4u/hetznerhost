@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s  # How often to scrape targets by default
+  evaluation_interval: 15s  # How often to evaluate rules
+  scrape_timeout: 10s  # Timeout for scraping a target
+
+# Rule files (optional)
+rule_files:
+  - "alert.rules"
+
+# Define scrape jobs (targets Prometheus scrapes for metrics)
+scrape_configs:
+  - job_name: 'docker'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['cadvisor:8080', 'prometheus:9090']  # Add cAdvisor and Prometheus as scrape targets
+
+  - job_name: 'node_exporter'  # Job name for monitoring the host system
+    static_configs:
+      - targets: ['node_exporter:9100']  #

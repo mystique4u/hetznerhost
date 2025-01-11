@@ -297,8 +297,51 @@ services:
     depends_on:
       - front
 
-volumes:
-  nginx_secrets:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/data:/prometheus  # Mount local directory for persistent storage
+    ports:
+      - "9090:9090"  # Expose locally if you need to access Prometheus via localhost
+    networks:
+      - main-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - ./grafana/data:/var/lib/grafana  # Mount local directory for persistent storage
+    ports:
+      - "3000:3000"  # Local port for Grafana (if needed)
+    networks:
+      - main-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`watch.itin.dev`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"  # Expose locally if you need to access cAdvisor via localhost
+    networks:
+      - main-net
+  
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: always
+    ports:
+      - "9100:9100"  # Expose port for scraping system metrics
+    networks:
+      - main-net
 
 networks:
   main-net:
