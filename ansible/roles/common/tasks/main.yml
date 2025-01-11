@@ -58,10 +58,6 @@
     - 465   # SMTP Secure
     - 587   # Submission
 
-- name: Install community.docker collection
-  ansible.builtin.command:
-    cmd: ansible-galaxy collection install community.docker
-
 - name: Ensure SSH private key exists (via GitHub secret)
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
