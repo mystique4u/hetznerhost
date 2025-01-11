@@ -1,4 +1,4 @@
 ---
 collections:
   - name: community.docker
-    version: "latest"  # Or specify the version you need
+    version: 4.3.0
