@@ -31,9 +31,8 @@
   args:
     executable: /bin/bash
 
-# Sync tar.gz backups to storage box
 - name: Sync backups to storage box
   command: >
-    rsync --progress --delete -e "ssh -i {{ ssh_private_key_path }} -p 23"
+    rsync --progress --delete -r -e "ssh -i {{ ssh_private_key_path }} -p 23"
     /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output

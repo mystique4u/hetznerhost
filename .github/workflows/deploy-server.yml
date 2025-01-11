@@ -113,7 +113,7 @@ jobs:
               echo "A record for domain $DOMAIN already exists. Skipping creation."
             fi
           done < ./domains.txt
-        working-directory: ./compose  # Set working directory to root (or where domains.txt is saved)
+        working-directory: ./compose
 
   ansible:
     name: Configure VM with Ansible
