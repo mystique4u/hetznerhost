@@ -132,7 +132,7 @@ jobs:
       # Install required Ansible collections, including community.docker
       - name: Install Ansible collections
         run: |
-          ansible-galaxy collection install community.docker
+          ansible-galaxy collection install community.docker --force
 
       - name: Add Private SSH Key for Ansible
         run: |

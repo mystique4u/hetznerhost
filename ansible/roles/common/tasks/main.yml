@@ -65,3 +65,12 @@
     mode: '0600'
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+
+- name: Debug loaded collections
+  command: ansible-galaxy collection list
+  register: ansible_collections
+  ignore_errors: true
+
+- name: Show loaded collections
+  debug:
+    var: ansible_collections
