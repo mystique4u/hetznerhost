@@ -79,10 +79,27 @@ services:
       - ./odoo/addons:/mnt/extra-addons
     labels:
       - "traefik.enable=true"
+
+      # General Odoo Router
       - "traefik.http.routers.odoo.rule=Host(`crm.itin.dev`)"
       - "traefik.http.routers.odoo.entrypoints=websecure"
       - "traefik.http.routers.odoo.tls.certresolver=letsencrypt"
       - "traefik.http.services.odoo.loadbalancer.server.port=8069"
+
+      # WebSocket Router
+      - "traefik.http.routers.odoo-websocket.rule=Host(`crm.itin.dev`) && Path(`/websocket`)"
+      - "traefik.http.routers.odoo-websocket.entrypoints=websecure"
+      - "traefik.http.routers.odoo-websocket.tls.certresolver=letsencrypt"
+      - "traefik.http.services.odoo-websocket.loadbalancer.server.port=8072"
+
+      # Security Headers Middleware
+      - "traefik.http.middlewares.security-headers.headers.strictTransportSecurity=max-age=31536000;includeSubDomains"
+      - "traefik.http.middlewares.security-headers.headers.cookie.secure=true"
+      - "traefik.http.middlewares.security-headers.headers.cookie.samesite=lax"
+
+      # Attach Middleware to Routers
+      - "traefik.http.routers.odoo.middlewares=security-headers"
+      - "traefik.http.routers.odoo-websocket.middlewares=security-headers"
     networks:
       - main-net
 
