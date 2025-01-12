@@ -50,7 +50,7 @@ services:
       POSTGRES_DB: ${ODOO_DB_NAME}
       PGDATA: ${ODOO_DB_PGDATA}
     volumes:
-      - ./db/postgres_data:/var/lib/postgresql/data
+      - ./db/odoo/pgdata:/var/lib/postgresql/data
       - ./db/postgresql.conf:/etc/postgresql.conf
       - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf
     command: postgres -c config_file=/etc/postgresql.conf

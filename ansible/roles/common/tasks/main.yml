@@ -65,4 +65,3 @@
     mode: '0600'
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-
