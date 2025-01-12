@@ -3,13 +3,8 @@
   hosts: all
   become: true
 
-  vars:
-    storage_box_user: "{{ lookup('env', 'STORAGE_BOX_USER') }}"
-    storage_box_host: "{{ lookup('env', 'STORAGE_BOX_HOST') }}"
-    ansible_user: "{{ lookup('env', 'SUDO_USER') }}"
-    storage_box_target_dir: "backups/hosts/hetznerhost"  # Remote directory
-    local_backup_dir: "/home/{{ ansible_user }}/dev/"
-    ssh_private_key_path: "/tmp/storagebox_ssh_key"
+  vars_files:
+    - ./vars.yml
 
   roles:
     - common          # OS updates and base tools
@@ -17,6 +12,7 @@
     - cron            # adding different crontabs to host
 #   - docker          # Installs Docker and Docker Compose
     - git-sync        # different folder synchronisation from you git repo to your host
+    - configs         # import secrets from github secrets and create configs
     - docker-cleanup  # Cleanup Docker before deploying
     - main-compose    # Deploys "main" docker compose file
 #   - storagemount    # optional mount hetznter storagebox for developer navigation
