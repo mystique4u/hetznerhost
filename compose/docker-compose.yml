@@ -306,86 +306,25 @@ services:
     depends_on:
       - front
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    privileged: true
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/data:/prometheus  # Mount local directory for persistent storage
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    expose:
-      - 9090
-    networks:
-      - main-net
-    depends_on:
-      - cadvisor
-    links:
-      - cadvisor:cadvisor
-      - node_exporter:node_exporter
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    volumes:
-      - ./grafana/data:/var/lib/grafana
-      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./grafana/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
-      - ./grafana/default.yaml:/etc/grafana/provisioning/dashboards/default.yaml
-    ports:
-      - "3000:3000"  # Local port for Grafana (if needed)
-    privileged: true
-    depends_on:
-      - prometheus
-    networks:
-      - main-net
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    command: -H unix:///var/run/docker.sock
+    environment:
+      - TZ=UTC
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`watch.itin.dev`)"
-      - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor
-    container_name: cadvisor
-    privileged: true  # Run in privileged mode to allow full access to host resources
-    restart: unless-stopped
-    devices:
-      - "/dev/kmsg:/dev/kmsg"
+      # Traefik dashboard
+      - "traefik.http.routers.portainer.rule=Host(`portainer.itin.dev`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
+      - "traefik.http.routers.portainer.middlewares=auth"
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /var/run/docker.sock:/var/run/docker.sock:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    ports:
-      - "8080:8080"
-    networks:
-      - main-net
-  
-  node_exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    restart: unless-stopped
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    expose:
-      - 9100
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./portainer/data:/data
     networks:
       - main-net
 
