@@ -10,9 +10,9 @@
     enabled: true
     state: started
 
-- name: Install Docker Compose
+- name: Install Docker Compose v2
   get_url:
-    url: "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+    url: "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
     dest: /usr/local/bin/docker-compose
     mode: '0755'
 
@@ -28,9 +28,7 @@
     append: true
 
 - name: Verify Docker Compose installation
-  ansible.builtin.docker_compose:
-    project_src: "/home/{{ ansible_user }}/dev/compose/"
-    command: version
+  command: docker-compose version
   register: docker_compose_version
   changed_when: false
   failed_when: docker_compose_version.rc != 0
