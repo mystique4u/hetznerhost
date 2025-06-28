@@ -16,6 +16,6 @@
 
 - name: Mount SSHFS directory if not mounted
   ansible.builtin.shell: |
-    sshfs -o IdentityFile={{ ssh_private_key_path }} -p 23 u328253@u328253.your-storagebox.de:/home "/home/{{ ansible_user }}/storagebox"
+    sshfs -o IdentityFile={{ ssh_storagebox_pkey_path }} -p 23 u328253@u328253.your-storagebox.de:/home "/home/{{ ansible_user }}/storagebox"
   when: sshfs_mount_check.rc != 0
   become: false  # Ensure this command is run as the ansible_user, not root

@@ -58,9 +58,17 @@
     - 465   # SMTP Secure
     - 587   # Submission
 
-- name: Ensure SSH private key exists (via GitHub secret)
+- name: Ensure Storagebox SSH private key exists (via GitHub secret) and copy it
   copy:
     content: "{{ lookup('env', 'STORAGE_BOX_SSH_KEY') }}"
+    dest: "{{ ssh_storagebox_pkey_path }}"
+    mode: '0600'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Ensure SSH private key exists (via GitHub secret) and copy it
+  copy:
+    content: "{{ lookup('env', 'SSH_PRIVATE_KEY') }}"
     dest: "{{ ssh_private_key_path }}"
     mode: '0600'
     owner: "{{ ansible_user }}"

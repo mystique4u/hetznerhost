@@ -8,7 +8,7 @@ LOCAL_DEV_DIR="/home/{{ ansible_user }}/dev"
 STORAGE_BOX_USER="{{ storage_box_user }}"
 STORAGE_BOX_HOST="{{ storage_box_user ~ '.' ~ storage_box_host }}"
 STORAGE_BOX_TARGET_DIR="{{ storage_box_target_dir }}"
-SSH_PRIVATE_KEY="{{ ssh_private_key_path }}"
+STORAGE_BOX_SSH_KEY="{{ ssh_storagebox_pkey_path }}"
 RSYNC_PORT=23
 
 # Ensure the temporary directories exist
@@ -24,6 +24,6 @@ tar -czf "$BACKUP_FILE" -C "$DEV_SNAPSHOT_DIR" .
 ls -t "${TMP_BACKUP_DIR}"/backup_*.tar.gz | tail -n +8 | xargs -r rm
 
 # Step 4: Sync tar.gz backups to the storage box
-rsync --progress --delete -e "ssh -i $SSH_PRIVATE_KEY -p $RSYNC_PORT" "$TMP_BACKUP_DIR/" "${STORAGE_BOX_USER}@${STORAGE_BOX_HOST}:${STORAGE_BOX_TARGET_DIR}"
+rsync --progress --delete -e "ssh -i $STORAGE_BOX_SSH_KEY -p $RSYNC_PORT" "$TMP_BACKUP_DIR/" "${STORAGE_BOX_USER}@${STORAGE_BOX_HOST}:${STORAGE_BOX_TARGET_DIR}"
 
 exit 0

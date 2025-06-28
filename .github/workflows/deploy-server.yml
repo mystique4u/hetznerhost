@@ -178,6 +178,7 @@ jobs:
           STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
           STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
           STORAGE_BOX_SSH_KEY: ${{ secrets.STORAGE_BOX_SSH_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SUDO_USER: ${{ secrets.SUDO_USER }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
