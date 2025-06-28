@@ -1,14 +1,4 @@
 ---
-# Create the .env file for secrets
-- name: Create secrets file
-  copy:
-    content: |
-      {{ lookup('env', 'COMPOSE_ENV') }}
-    dest: "/home/{{ ansible_user }}/dev/compose/.env"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0600'
-
 - name: Bring up Docker Compose services with --remove-orphans
   ansible.builtin.shell: |
     docker-compose up -d --remove-orphans
