@@ -1,0 +1,33 @@
+$ORIGIN mrdevops.pro.
+$TTL 86400
+; SOA Records
+@		IN	SOA	hydrogen.ns.hetzner.com. dns.hetzner.com. 2025011100 86400 10800 3600000 3600
+; NS Records
+@		IN	NS	helium.ns.hetzner.de.
+@		IN	NS	hydrogen.ns.hetzner.com.
+@		IN	NS	oxygen.ns.hetzner.com.
+; MX Records
+@	600	IN	MX	10 mail.mrdevops.pro.
+; A Records
+@		IN	A	128.140.14.147
+crm	86400	IN	A	128.140.14.147
+mail	86400	IN	A	128.140.14.147
+portainer	86400	IN	A	128.140.14.147
+traefik		IN	A	128.140.14.147
+watch	86400	IN	A	128.140.14.147
+; CNAME Records
+autoconfig	600	IN	CNAME	mail.mrdevops.pro.
+autodiscover	600	IN	CNAME	mail.mrdevops.pro.
+; TXT Records
+@	600	IN	TXT	"v=spf1 mx a:mail.mrdevops.pro ~all"
+_dmarc	600	IN	TXT	"v=DMARC1; p=reject; rua=mailto:mailadmin@mrdevops.pro; ruf=mailto:mailadmin@mrdevops.pro; adkim=s; aspf=s"
+dkim._domainkey	600	IN	TXT	"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlThYFoZrXo7gCAAU/ZEPu5/8WI2D/qqJ20e6dIMtfXemwmT9UXP30BxUPI0bdF8/HAZqx1Wx8ji3/6eG1NGDysxMApvOo/NLQ/3CVi7iKUYjaKFM/htXVL70wYbNMZYZ9Va+Z5C5zKrS5Z4H+0NE+py86PL+l7RP5oXwD3kO4vjsVZHqfJxyTJ9tm77AmQ92s" "OFVclMdRkrCQB4ncuyX6oACdCQxlva1WdDYT9KEcFrw3GV20t5ocGlOHkzvpCp4gyr4U6cWAZqBuEV5J2BDRp+YXHf+soUc+C74qy+p3txFwiG4x31jp0g1hzakDhleiRO37qBNlXJ+8XcqtlC88QIDAQAB"
+mrdevops.pro._report._dmarc	600	IN	TXT	"v=DMARC1;"
+; Others
+_autodiscover._tcp	600	IN	SRV	10 1 433 mail.mrdevops.pro.
+_imap._tcp	600	IN	SRV	0 0 0 .
+_imaps._tcp	600	IN	SRV	10 1 993 mail.mrdevops.pro.
+_pop3._tcp	600	IN	SRV	0 0 0 .
+_pop3s._tcp	600	IN	SRV	10 1 995 mail.mrdevops.pro.
+_submission._tcp	600	IN	SRV	0 0 0 .
+_submissions._tcp	600	IN	SRV	10 1 465 mail.mrdevops.pro.
