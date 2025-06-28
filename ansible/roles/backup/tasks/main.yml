@@ -1,7 +1,13 @@
 ---
 ### BACKUPS
 
-# Create a directory for dev snapshot
+# Check if dev directory exists
+- name: Check if dev directory exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user }}/dev"
+  register: dev_dir_stat
+
+# Create a directory for dev snapshot (only if dev directory exists)
 - name: Create dev snapshot directory
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/tmp_backups/dev_snapshot"
@@ -9,6 +15,7 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0755'
+  when: dev_dir_stat.stat.exists
 
 # Copy the /home/{{ ansible_user }}/dev folder to the snapshot directory
 - name: Copy /home/{{ ansible_user }}/dev folder to snapshot directory
@@ -16,6 +23,7 @@
     rsync -a --delete /home/{{ ansible_user }}/dev/ /home/{{ ansible_user }}/tmp_backups/dev_snapshot/
   args:
     executable: /bin/bash
+  when: dev_dir_stat.stat.exists
 
 # Compress the snapshot into a tar.gz file
 - name: Create tar.gz backup of dev snapshot
@@ -23,6 +31,7 @@
     tar -czf "/home/{{ ansible_user }}/tmp_backups/backup_$(date +'%Y%m%d%H%M%S').tar.gz" -C "/home/{{ ansible_user }}/tmp_backups/dev_snapshot/" .
   args:
     executable: /bin/bash
+  when: dev_dir_stat.stat.exists
 
 # Rotate backups to keep only the latest 7 tar.gz files
 - name: Rotate local backups (keep latest 7 backups)
@@ -31,8 +40,14 @@
   args:
     executable: /bin/bash
 
+# Sync backups to storage box
 - name: Sync backups to storage box
   command: >
     rsync --progress --delete -r -e "ssh -i {{ ssh_private_key_path }} -p 23"
-    /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
+     /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
+
+# Optional: Display backup status
+- name: Display backup result
+  debug:
+    msg: "{{ 'Dev directory backed up successfully' if dev_dir_stat.stat.exists else 'Dev directory does not exist - skipped backup creation' }}"
