@@ -1,26 +1,50 @@
 name: Terraform Destroy
-
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:
+    inputs:
+      parallelism:
+        description: 'Terraform parallelism level'
+        required: false
+        default: '10'
+        type: string
+      skip_refresh:
+        description: 'Skip refresh during destroy'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   terraform:
     name: Terraform Destroy
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-latest-4-cores  # Use faster runner if available
+    env:
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+      TF_IN_AUTOMATION: true
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: actions/checkout@v4
+      
+      - name: Cache Terraform
+        uses: actions/cache@v3
         with:
-          terraform_version: 1.4.0
+          path: |
+            ~/.terraform.d/plugin-cache
+            .terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
           terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TFC_TOKEN }}
-
+      
       - name: Create terraform.auto.tfvars
         run: |
+          mkdir -p ~/.terraform.d/plugin-cache
           cat <<EOF > terraform/terraform.auto.tfvars
           hcloud_token = "${{ secrets.HCLOUD_TOKEN }}"
           ssh_key_name = "${{ secrets.SSH_KEY_NAME }}"
@@ -28,11 +52,14 @@ jobs:
           sudo_user = "${{ secrets.SUDO_USER }}"
           firewall_name = "firewall-1"
           EOF
-
+      
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -upgrade=false
         working-directory: ./terraform
-
+      
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: |
+          terraform destroy -auto-approve \
+            -parallelism=${{ inputs.parallelism }} \
+            ${{ inputs.skip_refresh && '-refresh=false' || '' }}
         working-directory: ./terraform
