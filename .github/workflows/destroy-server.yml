@@ -53,13 +53,30 @@ jobs:
           firewall_name = "firewall-1"
           EOF
       
+      - name: Debug Environment
+        run: |
+          echo "=== Debug Info ==="
+          echo "Current directory: $(pwd)"
+          echo "Terraform version: $(terraform version)"
+          echo "Working directory contents:"
+          ls -la terraform/
+          echo "Environment variables:"
+          env | grep -E "(TF_|TERRAFORM_)" || echo "No TF vars found"
+      
       - name: Terraform Init
-        run: terraform init -upgrade=false
+        run: |
+          echo "=== Starting Terraform Init ==="
+          terraform init -upgrade=false
+          echo "=== Init completed ==="
         working-directory: ./terraform
       
       - name: Terraform Destroy
         run: |
+          echo "=== Starting Terraform Destroy ==="
+          echo "Parallelism: ${{ inputs.parallelism }}"
+          echo "Skip refresh: ${{ inputs.skip_refresh }}"
           terraform destroy -auto-approve \
             -parallelism=${{ inputs.parallelism }} \
             ${{ inputs.skip_refresh && '-refresh=false' || '' }}
+          echo "=== Destroy completed ==="
         working-directory: ./terraform
