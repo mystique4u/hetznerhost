@@ -40,12 +40,74 @@
   args:
     executable: /bin/bash
 
-# Sync backups to storage box
-- name: Sync backups to storage box
+# Complete backup sync solution with proper error handling
+
+# Option 2: Secure solution with proper host key management
+- name: Create .ssh directory
+  file:
+    path: "/home/{{ ansible_user }}/.ssh"
+    state: directory
+    mode: '0700'
+    owner: "{{ ansible_user }}"
+  tags: backup
+
+- name: Get storage box host key
+  command: ssh-keyscan -p 23 {{ storage_box_user ~ '.' ~ storage_box_host }}
+  register: storage_box_host_key
+  changed_when: false
+  tags: backup
+
+- name: Add storage box to known hosts
+  known_hosts:
+    name: "[{{ storage_box_user ~ '.' ~ storage_box_host }}]:23"
+    key: "{{ storage_box_host_key.stdout }}"
+    state: present
+    path: "/home/{{ ansible_user }}/.ssh/known_hosts"
+  become_user: "{{ ansible_user }}"
+  tags: backup
+
+- name: Test SSH connection to storage box
+  command: >
+    ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o ConnectTimeout=10
+    {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }} "echo 'Connection test successful'"
+  register: ssh_test
+  changed_when: false
+  tags: backup
+
+- name: Sync backups to storage box (secure)
   command: >
     rsync --progress --delete -r -e "ssh -i {{ ssh_storagebox_pkey_path }} -p 23"
-     /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
+    /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
   register: rsync_output
+  failed_when: rsync_output.rc != 0
+  tags: backup
+
+# Error handling and logging
+- name: Show rsync output on failure
+  debug:
+    msg: |
+      Rsync failed with return code: {{ rsync_output.rc }}
+      Stderr: {{ rsync_output.stderr }}
+      Stdout: {{ rsync_output.stdout }}
+  when: rsync_output is defined and rsync_output.rc != 0
+  tags: backup
+
+- name: Show successful sync statistics
+  debug:
+    msg: |
+      Backup sync completed successfully
+      Duration: {{ rsync_output.delta if rsync_output is defined else 'N/A' }}
+      Files transferred: Check rsync output above
+  when: rsync_output is defined and rsync_output.rc == 0
+  tags: backup
+
+# Cleanup temporary files if needed
+- name: Clean up temporary backup directory
+  file:
+    path: "/home/{{ ansible_user }}/tmp_backups"
+    state: absent
+  when: cleanup_temp_backups | default(false)
+  tags: backup
 
 # Optional: Display backup status
 - name: Display backup result
