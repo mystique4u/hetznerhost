@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -59,7 +59,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
   
       - name: Install dependencies
         run: sudo apt-get install -y curl jq
@@ -124,60 +124,63 @@ jobs:
           done < ./domains.txt
         working-directory: ./compose
 
-  ansible:
-    name: Configure VM with Ansible
-    runs-on: ubuntu-latest
-    needs: [terraform, manage_domains]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-  
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y ansible python3-pip
-          pip3 install ansible
-          pip3 install docker
-
-      # Install required Ansible collections, including community.docker
-      - name: Install Ansible collections
-        run: |
-          ansible-galaxy collection install -r requirements.yml --force
-        working-directory: ./ansible
-
-      - name: Add Private SSH Key for Ansible
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-        env:
-          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+ansible:
+  name: Configure VM with Ansible
+  runs-on: ubuntu-latest
+  needs: [terraform, manage_domains]
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
         
-      - name: Update Ansible Inventory with Public IP
-        run: |
-          sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/g" inventory.yml
-        working-directory: ./ansible
-
-      - name: Update Ansible Inventory with sudo user
-        run: |
-          sed -i "s/{{ sudo_user }}/${{ secrets.SUDO_USER }}/g" inventory.yml
-        working-directory: ./ansible
-
-      - name: Check Ansible Inventory
-        run: cat inventory.yml
-        working-directory: ./ansible
-
-      - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.yml playbook.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          COMPOSE_ENV: ${{ secrets.COMPOSE_ENV }}
-          STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
-          STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
-          STORAGE_BOX_SSH_KEY: ${{ secrets.STORAGE_BOX_SSH_KEY }}
-          SUDO_USER: ${{ secrets.SUDO_USER }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          CRM_ADMIN_PWD: ${{ secrets.CRM_ADMIN_PWD }}
-        working-directory: ./ansible
+    - name: Install Ansible and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ansible docker
+        
+    # Install required Ansible collections, including community.docker
+    - name: Install Ansible collections
+      run: |
+        ansible-galaxy collection install -r requirements.yml --force
+      working-directory: ./ansible
+      
+    - name: Add Private SSH Key for Ansible
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+      env:
+        ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+        
+    - name: Update Ansible Inventory with Public IP
+      run: |
+        sed -i "s/{{ public_ip }}/${{ needs.terraform.outputs.public_ip }}/g" inventory.yml
+      working-directory: ./ansible
+      
+    - name: Update Ansible Inventory with sudo user
+      run: |
+        sed -i "s/{{ sudo_user }}/${{ secrets.SUDO_USER }}/g" inventory.yml
+      working-directory: ./ansible
+      
+    - name: Check Ansible Inventory
+      run: cat inventory.yml
+      working-directory: ./ansible
+      
+    - name: Run Ansible Playbook
+      run: ansible-playbook -i inventory.yml playbook.yml
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+        COMPOSE_ENV: ${{ secrets.COMPOSE_ENV }}
+        STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
+        STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
+        STORAGE_BOX_SSH_KEY: ${{ secrets.STORAGE_BOX_SSH_KEY }}
+        SUDO_USER: ${{ secrets.SUDO_USER }}
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        CRM_ADMIN_PWD: ${{ secrets.CRM_ADMIN_PWD }}
+      working-directory: ./ansible

@@ -1,30 +1,57 @@
 ---
 ### SOME GIT FOLDERS SYNCHRONISATION
+
+# Ensure the dev directory structure exists
+- name: Ensure dev directory structure exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - "/home/{{ ansible_user }}/dev"
+    - "/home/{{ ansible_user }}/dev/compose"
+    - "/home/{{ ansible_user }}/dev/scripts"
+
 # Copy the entire compose directory recursively from the repository to the server, excluding acme.json
 - name: Copy entire compose directory to the server, excluding acme.json
-  synchronize:
+  ansible.posix.synchronize:
     src: ../../../../compose/
     dest: "/home/{{ ansible_user }}/dev/compose/"
     mode: push
     recursive: true
+    delete: false
     rsync_opts:
       - "--chmod=F644"
-      - "--exclude=traefik/acme.json"  # Exclude acme.json from synchronization
+      - "--exclude=traefik/acme.json"
+    private_key: "{{ ssh_private_key_path }}"
 
 # Check if acme.json already exists on the server
 - name: Check if acme.json exists on the server
-  stat:
+  ansible.builtin.stat:
     path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
   register: acme_file_stat
 
+# Create traefik directory if it doesn't exist
+- name: Ensure traefik directory exists
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/dev/compose/traefik"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  when: not acme_file_stat.stat.exists
+
 # Copy acme.json to the server only if it doesn't exist
 - name: Copy acme.json if it does not exist on the server
-  synchronize:
+  ansible.posix.synchronize:
     src: ../../../../compose/traefik/acme.json
     dest: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
     mode: push
     rsync_opts:
       - "--chmod=F600"
+    private_key: "{{ ssh_private_key_path }}"
   when: not acme_file_stat.stat.exists
 
 # Set write permission for all users on specific folders and their contents
@@ -41,16 +68,19 @@
 
 # Ensure acme.json has 600 permissions (just in case)
 - name: Ensure acme.json has 600 permissions
-  file:
+  ansible.builtin.file:
     path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
     mode: '0600'
+  ignore_errors: true
 
 # Copy the entire scripts directory recursively from the repository to the server
 - name: Copy entire scripts directory to the server
-  synchronize:
+  ansible.posix.synchronize:
     src: ../../../../scripts/
     dest: "/home/{{ ansible_user }}/dev/scripts/"
     mode: push
     recursive: true
+    delete: false
     rsync_opts:
       - "--chmod=F777"
+    private_key: "{{ ssh_private_key_path }}"
