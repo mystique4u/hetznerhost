@@ -22,7 +22,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: admin@itin.dev
+      email: admin@mrdevops.pro
       storage: /etc/traefik/acme.json
       httpChallenge:
         entryPoint: web
