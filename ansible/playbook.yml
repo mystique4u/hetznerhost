@@ -8,7 +8,7 @@
 
   roles:
     - common          # OS updates and base tools
-    - backup          # backup to hetzner storagebox
+#   - backup          # backup to hetzner storagebox
     - cron            # adding different crontabs to host
     - docker          # Installs Docker and Docker Compose
     - git-sync        # different folder synchronisation from you git repo to your host
