@@ -175,7 +175,6 @@ The following secrets need to be created and set as GitHub Secrets:
 - `DNS_API_TOKEN`- your hetzner DNS API token
 - `DNS_ZONE`- your hetzner DNS zone id(you can get it from url in admin panel)
 - `HCLOUD_TOKEN`- your hetzner cloud API token
-- `SSH_KEY_NAME` - your hetzner ssh key name (is it used?)
 - `SSH_PRIVATE_KEY` - your SSH private key. You have to create SHH key pair. This key you will use for direct host connection 
 - `SSH_PUBLIC_KEY`- your SSH pub key part from created above key pair
 - `SUDO_USER`- just your sudo username
