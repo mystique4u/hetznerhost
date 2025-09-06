@@ -1,6 +1,5 @@
 ---
-# Hetzner Storage Box API-based backup system
-# Uses Hetzner Cloud API instead of SSH for reliable backup operations
+# Hetzner Storage Box backup system using SSH key-based SFTP
 
 - name: Create backup directory if it doesn't exist
   ansible.builtin.file:
@@ -11,52 +10,25 @@
     group: "{{ sudo_user }}"
   tags: backup
 
-- name: Install required packages for API access
+- name: Install required packages for backup and SSH
   package:
     name:
       - curl
       - jq
+      - openssh-client
+      - rsync
     state: present
   tags: backup
 
-- name: Debug storage box API configuration
+- name: Debug storage box configuration
   debug:
     msg:
       - "Storage box name: {{ storage_box_name }}"
-      - "Storage API token: {{ storage_box_api_key[:10] }}..." # Show first 10 chars only
       - "Backup path: {{ backup_path }}"
       - "Target directory: {{ storage_box_target_dir }}"
-  tags: backup
-
-- name: Get storage box ID from Hetzner API
-  uri:
-    url: "https://api.hetzner.com/v1/storage_boxes"
-    method: GET
-    headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
-      Content-Type: "application/json"
-    return_content: yes
-  register: storage_boxes_response
-  tags: backup
-
-- name: Parse storage box ID
-  set_fact:
-    storage_box_id: "{{ (storage_boxes_response.json.storage_boxes | selectattr('name', 'equalto', storage_box_name) | first).id }}"
-  when: storage_boxes_response.json.storage_boxes is defined
-  tags: backup
-
-- name: Debug storage box information
-  debug:
-    msg:
-      - "Storage boxes found: {{ storage_boxes_response.json.storage_boxes | length }}"
-      - "Storage box ID: {{ storage_box_id | default('NOT_FOUND') }}"
-      - "Available storage boxes: {{ storage_boxes_response.json.storage_boxes | map(attribute='name') | list }}"
-  tags: backup
-
-- name: Fail if storage box not found
-  fail:
-    msg: "Storage box '{{ storage_box_name }}' not found. Available boxes: {{ storage_boxes_response.json.storage_boxes | map(attribute='name') | list }}"
-  when: storage_box_id is not defined
+      - "Storage box host: {{ storage_box_host }}"
+      - "Storage box user: {{ storage_box_user }}"
+      - "SSH key path: {{ ssh_storagebox_pkey_path }}"
   tags: backup
 
 - name: Create backup archive
@@ -74,45 +46,23 @@
       - "Archive path: {{ backup_archive.archive | default('NOT_CREATED') }}"
   tags: backup
 
-- name: Upload backup to storage box via API
-  uri:
-    url: "https://api.hetzner.com/v1/storage_boxes/{{ storage_box_id }}/actions/upload"
-    method: POST
-    headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
-      Content-Type: "application/json"
-    body_format: json
-    body:
-      source: "{{ backup_archive.archive }}"
-      destination: "{{ storage_box_target_dir }}/{{ backup_archive.archive | basename }}"
-  register: upload_response
-  when: storage_box_id is defined and backup_archive.archive is defined
+- name: Write SSH private key for storage box
+  copy:
+    content: "{{ lookup('env', 'SSH_PRIVATE_KEY') }}"
+    dest: "{{ ssh_storagebox_pkey_path }}"
+    mode: '0600'
   tags: backup
 
-- name: Debug upload response
-  debug:
-    msg: "Upload response: {{ upload_response.json | default('NO_RESPONSE') }}"
-  when: upload_response is defined
-  tags: backup
-
-- name: Check upload status
-  uri:
-    url: "https://api.hetzner.com/v1/actions/{{ upload_response.json.action.id }}"
-    method: GET
-    headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
-    return_content: yes
-  register: action_status
-  when: upload_response is defined and upload_response.json.action.id is defined
-  tags: backup
-
-- name: Debug action status
-  debug:
-    msg:
-      - "Action ID: {{ action_status.json.action.id | default('N/A') }}"
-      - "Action status: {{ action_status.json.action.status | default('N/A') }}"
-      - "Action progress: {{ action_status.json.action.progress | default('N/A') }}%"
-  when: action_status is defined
+- name: Upload backup to Hetzner Storage Box via SFTP (key-based)
+  ansible.posix.synchronize:
+    src: "{{ backup_archive.archive }}"
+    dest: "{{ storage_box_target_dir }}/"
+    mode: push
+    rsync_path: "mkdir -p {{ storage_box_target_dir }} && rsync"
+    ssh_args: "-i {{ ssh_storagebox_pkey_path }} -o StrictHostKeyChecking=no"
+    ssh_user: "{{ storage_box_user }}"
+    ssh_host: "{{ storage_box_host }}"
+  when: backup_archive.archive is defined
   tags: backup
 
 - name: Clean up old backups (keep last 7)
@@ -136,7 +86,5 @@
     msg: |
       Backup completed successfully!
       Archive: {{ backup_archive.archive | default('N/A') }}
-      Upload action: {{ upload_response.json.action.id | default('N/A') }}
-      Status: {{ action_status.json.action.status | default('N/A') }}
-  when: upload_response is defined and action_status is defined
+      Uploaded to: {{ storage_box_user }}@{{ storage_box_host }}:{{ storage_box_target_dir }}
   tags: backup

@@ -166,13 +166,24 @@ jobs:
         working-directory: ./ansible
         
       - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.yml playbook.yml
+        run: ansible-playbook -i inventory.yml playbook.yml \
+              -e "storage_box_name=${STORAGE_BOX_NAME}" \
+              -e "storage_box_user=${STORAGE_BOX_USER}" \
+              -e "storage_box_host=${STORAGE_BOX_HOST}" \
+              -e "storage_box_password=${STORAGE_BOX_PASSWORD}" \
+              -e "storage_box_target_dir=${STORAGE_BOX_TARGET_DIR}" \
+              -e "backup_path=/home/runner/tmp_backups" \
+              -e "dev_home_path=/home/runner/dev" \
+              -e "sudo_user=${SUDO_USER}"
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           PRIMARY_DOMAIN: ${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}
           COMPOSE_ENV: ${{ secrets.COMPOSE_ENV || '' }}
           STORAGE_BOX_NAME: ${{ secrets.STORAGE_BOX_NAME || 'your-storagebox' }}
-          HETZNER_STORAGE_API_KEY: ${{ secrets.HETZNER_STORAGE_API_KEY }}
+          STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
+          STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
+          STORAGE_BOX_PASSWORD: ${{ secrets.STORAGE_BOX_PASSWORD }}
+          STORAGE_BOX_TARGET_DIR: ${{ secrets.STORAGE_BOX_TARGET_DIR || 'backups/hosts/hetznerhost' }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SUDO_USER: ${{ secrets.SUDO_USER }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -180,3 +191,4 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           CRM_ADMIN_PWD: ${{ secrets.CRM_ADMIN_PWD }}
         working-directory: ./ansible
+

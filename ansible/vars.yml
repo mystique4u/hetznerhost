@@ -17,20 +17,19 @@ mail_domain: "mail.{{ primary_domain }}"
 portainer_domain: "portainer.{{ primary_domain }}"
 traefik_email: "admin@{{ primary_domain }}"
 
-# Storage Box Configuration (API-based)
+# Storage Box Configuration (SSH/SFTP-based)
 storage_box_name: "{{ lookup('env', 'STORAGE_BOX_NAME', 'your-storagebox') }}"
-storage_box_api_key: "{{ lookup('env', 'HETZNER_STORAGE_API_KEY') }}"
-storage_box_target_dir: "backups/hosts/hetznerhost"  # Remote directory
-local_backup_dir: "{{ dev_home_path }}/"
-
-# Legacy SSH configuration (kept for compatibility)
 storage_box_user: "{{ lookup('env', 'STORAGE_BOX_USER') }}"
 storage_box_host: "{{ lookup('env', 'STORAGE_BOX_HOST') }}"
-storage_box_fqdn: "{{ storage_box_user }}.{{ storage_box_host }}"
+storage_box_password: "{{ lookup('env', 'STORAGE_BOX_PASSWORD', '') }}"   # optional if using key
+storage_box_target_dir: "{{ lookup('env', 'STORAGE_BOX_TARGET_DIR', 'backups/hosts/hetznerhost') }}"
 
-# SSH Configuration
-ssh_storagebox_pkey_path: "/tmp/storagebox_ssh_key"
-ssh_private_key_path: "/tmp/private_ssh_key"
+# SSH Key paths for key-based authentication
+ssh_storagebox_pkey_path: "/tmp/storagebox_ssh_key"    # Private key for storage box
+ssh_private_key_path: "/tmp/private_ssh_key"           # Optional for other SSH tasks
+
+# Local backup directory
+local_backup_dir: "{{ backup_path }}"
 
 # SMTP Configuration
 smtp_user: "{{ lookup('env', 'SMTP_USER') }}"
