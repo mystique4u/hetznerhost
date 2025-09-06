@@ -23,7 +23,7 @@
   debug:
     msg:
       - "Storage box name: {{ storage_box_name }}"
-      - "Storage API token: {{ storage_box_api_key[:10] }}..." # Show first 10 chars only
+      - "Hetzner API token: {{ hcloud_token[:10] }}..." # Show first 10 chars only
       - "Backup path: {{ backup_path }}"
       - "Target directory: {{ storage_box_target_dir }}"
   tags: backup
@@ -33,7 +33,7 @@
     url: "https://api.hetzner.com/v1/storage_boxes"
     method: GET
     headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
+      Authorization: "Bearer {{ hcloud_token }}"
       Content-Type: "application/json"
     return_content: yes
   register: storage_boxes_response
@@ -79,7 +79,7 @@
     url: "https://api.hetzner.com/v1/storage_boxes/{{ storage_box_id }}/actions/upload"
     method: POST
     headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
+      Authorization: "Bearer {{ hcloud_token }}"
       Content-Type: "application/json"
     body_format: json
     body:
@@ -100,7 +100,7 @@
     url: "https://api.hetzner.com/v1/actions/{{ upload_response.json.action.id }}"
     method: GET
     headers:
-      Authorization: "Bearer {{ storage_box_api_key }}"
+      Authorization: "Bearer {{ hcloud_token }}"
     return_content: yes
   register: action_status
   when: upload_response is defined and upload_response.json.action.id is defined

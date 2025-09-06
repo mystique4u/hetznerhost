@@ -8,11 +8,11 @@
 
   roles:
     - common          # OS updates and base tools
-    - backup          # backup to hetzner storagebox
+    - backup          # backup to hetzner storagebox (API-based)
 #    - cron            # adding different crontabs to host
     - docker          # Installs Docker and Docker Compose
     - git-sync        # different folder synchronisation from you git repo to your host
     - configs         # import secrets from github secrets and create configs
     - docker-cleanup  # Cleanup Docker before deploying
     - main-compose    # Deploys "main" docker compose file
-    - storagemount    # optional mount hetznter storagebox for developer navigation
+    # - storagemount    # optional mount hetznter storagebox for developer navigation - DISABLED: Hetzner moved to new API

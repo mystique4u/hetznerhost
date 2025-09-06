@@ -1,0 +1,89 @@
+---
+# New Hetzner Storage Box API approach
+# This replaces the old SSH-based approach with the new API
+
+- name: Debug storage box API configuration
+  debug:
+    msg:
+      - "Storage box user: {{ storage_box_user }}"
+      - "Storage box host: {{ storage_box_host }}"
+      - "Hetzner API token: {{ hcloud_token[:10] }}..." # Show first 10 chars only
+      - "Backup path: {{ backup_path }}"
+      - "Target directory: {{ storage_box_target_dir }}"
+  tags: backup
+
+- name: Install required packages for API access
+  package:
+    name:
+      - curl
+      - jq
+    state: present
+  tags: backup
+
+- name: Get storage box ID from Hetzner API
+  uri:
+    url: "https://api.hetzner.com/v1/storage_boxes"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ hcloud_token }}"
+      Content-Type: "application/json"
+    return_content: yes
+  register: storage_boxes_response
+  tags: backup
+
+- name: Parse storage box ID
+  set_fact:
+    storage_box_id: "{{ (storage_boxes_response.json.storage_boxes | selectattr('name', 'equalto', storage_box_name) | first).id }}"
+  when: storage_boxes_response.json.storage_boxes is defined
+  tags: backup
+
+- name: Debug storage box information
+  debug:
+    msg:
+      - "Storage boxes found: {{ storage_boxes_response.json.storage_boxes | length }}"
+      - "Storage box ID: {{ storage_box_id | default('NOT_FOUND') }}"
+      - "Available storage boxes: {{ storage_boxes_response.json.storage_boxes | map(attribute='name') | list }}"
+  tags: backup
+
+- name: Create backup archive
+  archive:
+    path: "{{ backup_path }}/"
+    dest: "{{ backup_path }}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
+    format: gz
+  tags: backup
+
+- name: Upload backup to storage box via API
+  uri:
+    url: "https://api.hetzner.com/v1/storage_boxes/{{ storage_box_id }}/actions/upload"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ hcloud_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      source: "{{ backup_path }}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
+      destination: "{{ storage_box_target_dir }}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
+  register: upload_response
+  when: storage_box_id is defined
+  tags: backup
+
+- name: Debug upload response
+  debug:
+    msg: "Upload response: {{ upload_response.json | default('NO_RESPONSE') }}"
+  when: upload_response is defined
+  tags: backup
+
+- name: Clean up old backups (keep last 7)
+  find:
+    paths: "{{ backup_path }}"
+    patterns: "backup_*.tar.gz"
+    age: "7d"
+  register: old_backups
+  tags: backup
+
+- name: Remove old backup files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ old_backups.files }}"
+  tags: backup
