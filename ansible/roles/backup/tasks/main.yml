@@ -131,7 +131,7 @@
   register: ssh_test_no_check
   changed_when: false
   failed_when: false
-  when: (storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc != 0) or (ssh_test.rc != 0 and ssh_test_alt.rc != 0)
+  when: (storage_box_host_key.rc != 0 and (storage_box_host_key_alt.rc | default(0) != 0)) or (ssh_test.rc | default(0) != 0 and (ssh_test_alt.rc | default(0) != 0))
   tags: backup
 
 - name: Debug SSH test results
@@ -172,7 +172,7 @@
   register: rsync_output_no_check
   changed_when: rsync_output_no_check.rc == 0
   failed_when: false
-  when: (storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc != 0) or (rsync_output.rc != 0 and rsync_output_alt.rc != 0)
+  when: (storage_box_host_key.rc != 0 and (storage_box_host_key_alt.rc | default(0) != 0)) or ((rsync_output.rc | default(0) != 0) and (rsync_output_alt.rc | default(0) != 0))
   tags: backup
 
 # Error handling and logging
