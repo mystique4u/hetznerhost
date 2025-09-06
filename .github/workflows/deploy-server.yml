@@ -166,15 +166,7 @@ jobs:
         working-directory: ./ansible
         
       - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.yml playbook.yml \
-              -e "storage_box_name=${STORAGE_BOX_NAME}" \
-              -e "storage_box_user=${STORAGE_BOX_USER}" \
-              -e "storage_box_host=${STORAGE_BOX_HOST}" \
-              -e "storage_box_password=${STORAGE_BOX_PASSWORD}" \
-              -e "storage_box_target_dir=${STORAGE_BOX_TARGET_DIR}" \
-              -e "backup_path=/home/runner/tmp_backups" \
-              -e "dev_home_path=/home/runner/dev" \
-              -e "sudo_user=${SUDO_USER}"
+        run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           PRIMARY_DOMAIN: ${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}
