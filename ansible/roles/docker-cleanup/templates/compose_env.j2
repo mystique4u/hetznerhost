@@ -7,7 +7,12 @@ PORTAINER_DOMAIN={{ portainer_domain }}
 TRAEFIK_EMAIL={{ traefik_email }}
 
 # Traefik Authentication (from COMPOSE_ENV)
-{{ lookup('env', 'COMPOSE_ENV') }}
+{% set compose_env = lookup('env', 'COMPOSE_ENV', '') %}
+{% if compose_env and compose_env != '' %}
+{{ compose_env }}
+{% else %}
+# COMPOSE_ENV not set or empty
+{% endif %}
 
 # Odoo Database Configuration
 ODOO_DB_USER={{ lookup('env', 'ODOO_DB_USER', 'odoo') }}
