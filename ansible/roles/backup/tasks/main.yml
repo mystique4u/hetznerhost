@@ -36,6 +36,8 @@
     path: "{{ dev_home_path }}/"
     dest: "{{ backup_path }}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
     format: gz
+    exclude_path:
+      - "{{ backup_path }}"   # exclude tmp_backups itself
   register: backup_archive
   tags: backup
 
