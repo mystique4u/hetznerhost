@@ -1,0 +1,26 @@
+{
+  "providers": [
+    {
+      "name": "local-ollama",
+      "type": "ollama",
+      "host": "http://localhost:11434",
+      "model": "deepseek-coder-v2:latest",
+      "stream": true
+    }
+  ],
+  "defaultProvider": "local-ollama",
+  "completion": {
+    "maxTokens": 512,
+    "temperature": 0.2,
+    "topP": 0.95,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "contextStrategy": {
+    "numRelevantSnippets": 3,
+    "maxPromptTokens": 2048
+  },
+  "logging": {
+    "level": "info"
+  }
+}
