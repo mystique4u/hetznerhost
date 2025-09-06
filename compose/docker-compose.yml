@@ -21,7 +21,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Traefik dashboard
-      - "traefik.http.routers.traefik.rule=Host(`traefik.mrdevops.pro`)"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
@@ -78,14 +78,14 @@ services:
     labels:
       - "traefik.enable=true"
       # Route for main Odoo application
-      - "traefik.http.routers.odoo.rule=Host(`crm.mrdevops.pro`)"
+      - "traefik.http.routers.odoo.rule=Host(`${CRM_DOMAIN}`)"
       - "traefik.http.routers.odoo.entrypoints=websecure"
       - "traefik.http.routers.odoo.tls.certresolver=letsencrypt"
       - "traefik.http.routers.odoo.service=odoo-service"
       - "traefik.http.services.odoo-service.loadbalancer.server.port=8069"
 
       # Route for WebSocket traffic
-      - "traefik.http.routers.odoo-websocket.rule=Host(`crm.mrdevops.pro`) && Path(`/websocket`)"
+      - "traefik.http.routers.odoo-websocket.rule=Host(`${CRM_DOMAIN}`) && Path(`/websocket`)"
       - "traefik.http.routers.odoo-websocket.entrypoints=websecure"
       - "traefik.http.routers.odoo-websocket.tls.certresolver=letsencrypt"
       - "traefik.http.routers.odoo-websocket.service=odoo-websocket-service"
@@ -130,12 +130,12 @@ services:
       - "traefik.enable=true"
 
       # the second part is important to ensure Mailu can get certificates from letsencrypt for all hostnames
-      - "traefik.http.routers.web.rule=Host(`mail.mrdevops.pro`) || PathPrefix(`/.well-known/acme-challenge/`)"
+      - "traefik.http.routers.web.rule=Host(`${MAIL_DOMAIN}`) || PathPrefix(`/.well-known/acme-challenge/`)"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=80"
 
       # other FQDNS can be added here:
-      - "traefik.tcp.routers.websecure.rule=HostSNI(`mail.mrdevops.pro`) || HostSNI(`autoconfig.mrdevops.pro`)"
+      - "traefik.tcp.routers.websecure.rule=HostSNI(`${MAIL_DOMAIN}`) || HostSNI(`autoconfig.${PRIMARY_DOMAIN}`)"
       - "traefik.tcp.routers.websecure.entrypoints=websecure"
       - "traefik.tcp.routers.websecure.tls.passthrough=true"
       - "traefik.tcp.routers.websecure.service=websecure"
@@ -314,7 +314,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Traefik dashboard
-      - "traefik.http.routers.portainer.rule=Host(`portainer.mrdevops.pro`)"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_DOMAIN}`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"

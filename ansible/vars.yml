@@ -1,15 +1,37 @@
 ---
-# storagebox backup
+# User Configuration
+sudo_user: "{{ lookup('env', 'SUDO_USER') }}"
+
+# Path Configuration
+dev_home_path: "/home/{{ sudo_user }}/dev"
+compose_path: "{{ dev_home_path }}/compose"
+backup_path: "{{ dev_home_path }}/tmp_backups"
+storagebox_mount_path: "{{ dev_home_path }}/storagebox"
+scripts_path: "{{ dev_home_path }}/scripts"
+
+# Domain Configuration
+primary_domain: "mrdevops.pro"
+traefik_domain: "traefik.{{ primary_domain }}"
+crm_domain: "crm.{{ primary_domain }}"
+mail_domain: "mail.{{ primary_domain }}"
+portainer_domain: "portainer.{{ primary_domain }}"
+traefik_email: "admin@{{ primary_domain }}"
+
+# Storage Box Configuration
 storage_box_user: "{{ lookup('env', 'STORAGE_BOX_USER') }}"
 storage_box_host: "{{ lookup('env', 'STORAGE_BOX_HOST') }}"
-ansible_user: "{{ lookup('env', 'SUDO_USER') }}"
+storage_box_fqdn: "{{ storage_box_user }}.{{ storage_box_host }}"
 storage_box_target_dir: "backups/hosts/hetznerhost"  # Remote directory
-local_backup_dir: "/home/{{ ansible_user }}/dev/"
+local_backup_dir: "{{ dev_home_path }}/"
+
+# SSH Configuration
 ssh_storagebox_pkey_path: "/tmp/storagebox_ssh_key"
 ssh_private_key_path: "/tmp/private_ssh_key"
-# smptp credentials
+
+# SMTP Configuration
 smtp_user: "{{ lookup('env', 'SMTP_USER') }}"
 smtp_password: "{{ lookup('env', 'SMTP_PASSWORD') }}"
 smtp_server: "{{ lookup('env', 'SMTP_SERVER') }}"
-# odoo crm specific
+
+# Odoo CRM Configuration
 crm_admin_pwd: "{{ lookup('env', 'CRM_ADMIN_PWD') }}"

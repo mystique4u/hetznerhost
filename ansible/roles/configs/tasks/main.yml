@@ -2,7 +2,7 @@
 - name: Generate backup script from template
   template:
     src: odoo.conf.j2
-    dest: "/home/{{ ansible_user }}/dev/compose/odoo/config/odoo.conf"
+    dest: "{{ dev_home_path }}/compose/odoo/config/odoo.conf"
     mode: '0755'
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"

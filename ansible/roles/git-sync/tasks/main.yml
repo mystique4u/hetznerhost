@@ -6,19 +6,19 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
     mode: '0755'
   loop:
-    - "/home/{{ ansible_user }}/dev"
-    - "/home/{{ ansible_user }}/dev/compose"
-    - "/home/{{ ansible_user }}/dev/scripts"
+    - "{{ dev_home_path }}"
+    - "{{ dev_home_path }}/compose"
+    - "{{ dev_home_path }}/scripts"
 
 # Copy the entire compose directory recursively from the repository to the server, excluding acme.json
 - name: Copy entire compose directory to the server, excluding acme.json
   ansible.posix.synchronize:
     src: ../../../../compose/
-    dest: "/home/{{ ansible_user }}/dev/compose/"
+    dest: "{{ dev_home_path }}/compose/"
     mode: push
     recursive: true
     delete: false
@@ -30,16 +30,16 @@
 # Check if acme.json already exists on the server
 - name: Check if acme.json exists on the server
   ansible.builtin.stat:
-    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    path: "{{ dev_home_path }}/compose/traefik/acme.json"
   register: acme_file_stat
 
 # Create traefik directory if it doesn't exist
 - name: Ensure traefik directory exists
   ansible.builtin.file:
-    path: "/home/{{ ansible_user }}/dev/compose/traefik"
+    path: "{{ dev_home_path }}/compose/traefik"
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
     mode: '0755'
   when: not acme_file_stat.stat.exists
 
@@ -47,7 +47,7 @@
 - name: Copy acme.json if it does not exist on the server
   ansible.posix.synchronize:
     src: ../../../../compose/traefik/acme.json
-    dest: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    dest: "{{ dev_home_path }}/compose/traefik/acme.json"
     mode: push
     rsync_opts:
       - "--chmod=F600"
@@ -61,15 +61,15 @@
     mode: '0777'
     recurse: true
   loop:
-    - "/home/{{ ansible_user }}/dev/compose/odoo"
-    - "/home/{{ ansible_user }}/dev/compose/db"
-    - "/home/{{ ansible_user }}/dev/compose/prometheus"
-    - "/home/{{ ansible_user }}/dev/compose/grafana"
+    - "{{ dev_home_path }}/compose/odoo"
+    - "{{ dev_home_path }}/compose/db"
+    - "{{ dev_home_path }}/compose/prometheus"
+    - "{{ dev_home_path }}/compose/grafana"
 
 # Ensure acme.json has 600 permissions (just in case)
 - name: Ensure acme.json has 600 permissions
   ansible.builtin.file:
-    path: "/home/{{ ansible_user }}/dev/compose/traefik/acme.json"
+    path: "{{ dev_home_path }}/compose/traefik/acme.json"
     mode: '0600'
   ignore_errors: true
 
@@ -77,7 +77,7 @@
 - name: Copy entire scripts directory to the server
   ansible.posix.synchronize:
     src: ../../../../scripts/
-    dest: "/home/{{ ansible_user }}/dev/scripts/"
+    dest: "{{ dev_home_path }}/scripts/"
     mode: push
     recursive: true
     delete: false

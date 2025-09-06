@@ -2,20 +2,20 @@
 ### MOUNT REMOTE DISK
 - name: Create ~/mount directory if it doesn't exist
   ansible.builtin.file:
-    path: "/home/{{ ansible_user }}/storagebox"
+    path: "{{ storagebox_mount_path }}"
     state: directory
     mode: '0755'
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
 
 - name: Check if the SSHFS mount is already present
-  ansible.builtin.command: mountpoint "/home/{{ ansible_user }}/storagebox"
+  ansible.builtin.command: mountpoint "{{ storagebox_mount_path }}"
   register: sshfs_mount_check
   changed_when: false
   failed_when: sshfs_mount_check.rc != 0 and sshfs_mount_check.stderr != ""
 
 - name: Mount SSHFS directory if not mounted
   ansible.builtin.shell: |
-    sshfs -o IdentityFile={{ ssh_storagebox_pkey_path }} -p 23 u328253@u328253.your-storagebox.de:/home "/home/{{ ansible_user }}/storagebox"
+    sshfs -o IdentityFile={{ ssh_storagebox_pkey_path }} -p 23 {{ storage_box_user }}@{{ storage_box_fqdn }}:/home "{{ storagebox_mount_path }}"
   when: sshfs_mount_check.rc != 0
   become: false  # Ensure this command is run as the ansible_user, not root

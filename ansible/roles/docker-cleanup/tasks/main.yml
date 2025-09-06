@@ -1,18 +1,17 @@
 ---
 # Create the .env file for secrets
 - name: Create secrets file
-  copy:
-    content: |
-      {{ lookup('env', 'COMPOSE_ENV') }}
-    dest: "/home/{{ ansible_user }}/dev/compose/.env"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+  template:
+    src: compose_env.j2
+    dest: "{{ compose_path }}/.env"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
     mode: '0600'
 
 - name: Tear down Docker Compose services
   ansible.builtin.command:
     cmd: docker-compose down
-    chdir: "/home/{{ ansible_user }}/dev/compose/"
+    chdir: "{{ compose_path }}/"
 
 - name: Prune everything (including non-dangling images)
   community.docker.docker_prune:

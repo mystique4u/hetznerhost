@@ -4,23 +4,23 @@
 # Check if dev directory exists
 - name: Check if dev directory exists
   ansible.builtin.stat:
-    path: "/home/{{ ansible_user }}/dev"
+    path: "{{ dev_home_path }}"
   register: dev_dir_stat
 
 # Create a directory for dev snapshot (only if dev directory exists)
 - name: Create dev snapshot directory
   ansible.builtin.file:
-    path: "/home/{{ ansible_user }}/tmp_backups/dev_snapshot"
+    path: "{{ backup_path }}/dev_snapshot"
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
     mode: '0755'
   when: dev_dir_stat.stat.exists
 
-# Copy the /home/{{ ansible_user }}/dev folder to the snapshot directory
-- name: Copy /home/{{ ansible_user }}/dev folder to snapshot directory
+# Copy the {{ dev_home_path }} folder to the snapshot directory
+- name: Copy {{ dev_home_path }} folder to snapshot directory
   ansible.builtin.shell: |
-    rsync -a --delete /home/{{ ansible_user }}/dev/ /home/{{ ansible_user }}/tmp_backups/dev_snapshot/
+    rsync -a --delete {{ dev_home_path }}/ {{ backup_path }}/dev_snapshot/
   args:
     executable: /bin/bash
   when: dev_dir_stat.stat.exists
@@ -28,7 +28,7 @@
 # Compress the snapshot into a tar.gz file
 - name: Create tar.gz backup of dev snapshot
   ansible.builtin.shell: |
-    tar -czf "/home/{{ ansible_user }}/tmp_backups/backup_$(date +'%Y%m%d%H%M%S').tar.gz" -C "/home/{{ ansible_user }}/tmp_backups/dev_snapshot/" .
+    tar -czf "{{ backup_path }}/backup_$(date +'%Y%m%d%H%M%S').tar.gz" -C "{{ backup_path }}/dev_snapshot/" .
   args:
     executable: /bin/bash
   when: dev_dir_stat.stat.exists
@@ -36,7 +36,7 @@
 # Rotate backups to keep only the latest 7 tar.gz files
 - name: Rotate local backups (keep latest 7 backups)
   ansible.builtin.shell: |
-    ls -t /home/{{ ansible_user }}/tmp_backups/backup_*.tar.gz | tail -n +8 | xargs -r rm
+    ls -t {{ backup_path }}/backup_*.tar.gz | tail -n +8 | xargs -r rm
   args:
     executable: /bin/bash
 
@@ -45,31 +45,31 @@
 # Option 2: Secure solution with proper host key management
 - name: Create .ssh directory
   file:
-    path: "/home/{{ ansible_user }}/.ssh"
+    path: "/home/{{ sudo_user }}/.ssh"
     state: directory
     mode: '0700'
-    owner: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
   tags: backup
 
 - name: Get storage box host key
-  command: ssh-keyscan -p 23 {{ storage_box_user ~ '.' ~ storage_box_host }}
+  command: ssh-keyscan -p 23 {{ storage_box_fqdn }}
   register: storage_box_host_key
   changed_when: false
   tags: backup
 
 - name: Add storage box to known hosts
   known_hosts:
-    name: "[{{ storage_box_user ~ '.' ~ storage_box_host }}]:23"
+    name: "[{{ storage_box_fqdn }}]:23"
     key: "{{ storage_box_host_key.stdout }}"
     state: present
-    path: "/home/{{ ansible_user }}/.ssh/known_hosts"
-  become_user: "{{ ansible_user }}"
+    path: "/home/{{ sudo_user }}/.ssh/known_hosts"
+  become_user: "{{ sudo_user }}"
   tags: backup
 
 - name: Test SSH connection to storage box
   command: >
     ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o ConnectTimeout=10
-    {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }} "echo 'Connection test successful'"
+    {{ storage_box_user }}@{{ storage_box_fqdn }} "echo 'Connection test successful'"
   register: ssh_test
   changed_when: false
   tags: backup
@@ -77,7 +77,7 @@
 - name: Sync backups to storage box (secure)
   command: >
     rsync --progress --delete -r -e "ssh -i {{ ssh_storagebox_pkey_path }} -p 23"
-    /home/{{ ansible_user }}/tmp_backups/ {{ storage_box_user }}@{{ storage_box_user ~ '.' ~ storage_box_host }}:{{ storage_box_target_dir }}
+    {{ backup_path }}/ {{ storage_box_user }}@{{ storage_box_fqdn }}:{{ storage_box_target_dir }}
   register: rsync_output
   failed_when: rsync_output.rc != 0
   tags: backup
@@ -104,7 +104,7 @@
 # Cleanup temporary files if needed
 - name: Clean up temporary backup directory
   file:
-    path: "/home/{{ ansible_user }}/tmp_backups"
+    path: "{{ backup_path }}"
     state: absent
   when: cleanup_temp_backups | default(false)
   tags: backup

@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Define variables
-TMP_BACKUP_DIR="/home/{{ ansible_user }}/tmp_backups"
+TMP_BACKUP_DIR="{{ backup_path }}"
 DEV_SNAPSHOT_DIR="${TMP_BACKUP_DIR}/dev_snapshot"
 BACKUP_FILE="${TMP_BACKUP_DIR}/backup_$(date +'%Y%m%d%H%M%S').tar.gz"
-LOCAL_DEV_DIR="/home/{{ ansible_user }}/dev"
+LOCAL_DEV_DIR="{{ dev_home_path }}"
 STORAGE_BOX_USER="{{ storage_box_user }}"
-STORAGE_BOX_HOST="{{ storage_box_user ~ '.' ~ storage_box_host }}"
+STORAGE_BOX_HOST="{{ storage_box_fqdn }}"
 STORAGE_BOX_TARGET_DIR="{{ storage_box_target_dir }}"
 STORAGE_BOX_SSH_KEY="{{ ssh_storagebox_pkey_path }}"
 RSYNC_PORT=23
@@ -14,7 +14,7 @@ RSYNC_PORT=23
 # Ensure the temporary directories exist
 mkdir -p "$DEV_SNAPSHOT_DIR"
 
-# Step 1: Synchronize /home/{{ ansible_user }}/dev to snapshot directory
+# Step 1: Synchronize {{ dev_home_path }} to snapshot directory
 rsync -a --delete "$LOCAL_DEV_DIR/" "$DEV_SNAPSHOT_DIR/"
 
 # Step 2: Create tar.gz archive of the snapshot directory

@@ -3,7 +3,7 @@
   ansible.builtin.shell: |
     docker-compose up -d --remove-orphans
   args:
-    chdir: "/home/{{ ansible_user }}/dev/compose/"
+    chdir: "{{ compose_path }}/"
   register: compose_output
   changed_when: "'Creating' in compose_output.stdout or 'Starting' in compose_output.stdout"
   failed_when: compose_output.rc != 0

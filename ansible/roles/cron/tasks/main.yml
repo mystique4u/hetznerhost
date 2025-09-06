@@ -3,16 +3,16 @@
 - name: Generate backup script from template
   template:
     src: backup.sh.j2
-    dest: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
+    dest: "{{ scripts_path }}/cron/backup.sh"
     mode: '0755'
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_user }}"
 
 # Create cron job for the backup script
 - name: Create a cron job for the backup script
   ansible.builtin.cron:
     name: "Daily Backup Sync"
-    user: "{{ ansible_user }}"
+    user: "{{ sudo_user }}"
     minute: "0"
     hour: "2"  # Runs daily at 2 AM
-    job: "/home/{{ ansible_user }}/dev/scripts/cron/backup.sh"
+    job: "{{ scripts_path }}/cron/backup.sh"
