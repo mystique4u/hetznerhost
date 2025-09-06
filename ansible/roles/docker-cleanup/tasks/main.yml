@@ -1,18 +1,4 @@
 ---
-# Debug environment variables
-- name: Debug environment variables
-  debug:
-    msg:
-      - "COMPOSE_ENV: '{{ lookup('env', 'COMPOSE_ENV', 'NOT_SET') }}'"
-      - "ODOO_DB_USER: '{{ lookup('env', 'ODOO_DB_USER', 'NOT_SET') }}'"
-      - "ODOO_DB_PASSWORD: '{{ lookup('env', 'ODOO_DB_PASSWORD', 'NOT_SET') }}'"
-      - "ODOO_DB_NAME: '{{ lookup('env', 'ODOO_DB_NAME', 'NOT_SET') }}'"
-      - "ODOO_DB_PGDATA: '{{ lookup('env', 'ODOO_DB_PGDATA', 'NOT_SET') }}'"
-      - "DOCKER_ORG: '{{ lookup('env', 'DOCKER_ORG', 'NOT_SET') }}'"
-      - "DOCKER_PREFIX: '{{ lookup('env', 'DOCKER_PREFIX', 'NOT_SET') }}'"
-      - "MAILU_VERSION: '{{ lookup('env', 'MAILU_VERSION', 'NOT_SET') }}'"
-      - "DS_PROMETHEUS: '{{ lookup('env', 'DS_PROMETHEUS', 'NOT_SET') }}'"
-
 # Create the .env file for secrets
 - name: Create secrets file
   template:
