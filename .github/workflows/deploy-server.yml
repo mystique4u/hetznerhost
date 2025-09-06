@@ -52,80 +52,72 @@ jobs:
         working-directory: ./terraform
 
   manage_domains:
-    name: Manage Domains with Hetzner API
+    name: Manage Domains with Hetzner API (Robust with Logging)
     runs-on: ubuntu-latest
     needs: terraform
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-  
+      - uses: actions/checkout@v4
+
       - name: Install dependencies
-        run: sudo apt-get install -y curl jq
-      # it is working only for subdomains. IT WILL NOT WORK FOR SUB SUB*N domains
-      - name: Define domain names for DNS management
+        run: sudo apt-get update && sudo apt-get install -y curl jq
+
+      - name: Check & create A records idempotently
         run: |
-          # Define the primary domain and subdomains
-          PRIMARY_DOMAIN="${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}"
-          TRAEFIK_DOMAIN="traefik.${PRIMARY_DOMAIN}"
-          CRM_DOMAIN="crm.${PRIMARY_DOMAIN}"
-          MAIL_DOMAIN="mail.${PRIMARY_DOMAIN}"
-          PORTAINER_DOMAIN="portainer.${PRIMARY_DOMAIN}"
-          
-          # Create domains list
-          echo "traefik" > ./domains.txt
-          echo "crm" >> ./domains.txt
-          echo "mail" >> ./domains.txt
-          echo "portainer" >> ./domains.txt
-          
-          echo "Primary domain: ${PRIMARY_DOMAIN}"
-          echo "Domains to be created:"
-          cat ./domains.txt
-        working-directory: ./compose
-  
-      - name: Check and create domains using Hetzner API
-        run: |
-          echo "Starting domain management process..."
-          PRIMARY_DOMAIN="${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}"
-          
-          while read SUBDOMAIN; do
-            FULL_DOMAIN="${SUBDOMAIN}.${PRIMARY_DOMAIN}"
-            echo "Processing domain: $FULL_DOMAIN"
-  
-            # API endpoint and token for Hetzner DNS
-            HETZNER_API="https://dns.hetzner.com/api/v1"
-            API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
-            SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
-            ZONE_ID="${{ secrets.DNS_ZONE_ID }}"
-  
-            echo "API Token: $API_TOKEN"
-            echo "Zone ID: $ZONE_ID"
-            echo "Server IP: $SERVER_IP"
-  
-            # Check if the A record already exists for the domain
-            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$FULL_DOMAIN\" and .type == \"A\")")
-  
-            if [ -z "$EXISTING_RECORD" ]; then
-              echo "Domain $FULL_DOMAIN does not have an A record. Creating it..."
-              
-              # Create the new A record for the domain
-              CREATE_RECORD_RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
-                -H "Content-Type: application/json" \
-                -H "Auth-API-Token: $API_TOKEN" \
-                -d "{
-                  \"value\": \"$SERVER_IP\",
-                  \"ttl\": 86400,
-                  \"type\": \"A\",
-                  \"name\": \"$FULL_DOMAIN\",
-                  \"zone_id\": \"$ZONE_ID\"
-                }")
-  
-              echo "A record for domain $FULL_DOMAIN created successfully"
+          PRIMARY_DOMAIN="${{ secrets.PRIMARY_DOMAIN }}"
+          HETZNER_API="https://dns.hetzner.com/api/v1"
+          API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
+          ZONE_ID="${{ secrets.DNS_ZONE_ID }}"
+          SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
+
+          echo "=== Variables ==="
+          echo "Primary domain: $PRIMARY_DOMAIN"
+          echo "Zone ID: $ZONE_ID"
+          echo "Server IP: $SERVER_IP"
+
+          echo "=== Desired subdomains from compose/domains.txt ==="
+          cat domains.txt
+
+          echo "=== Fetching existing A records from Hetzner API ==="
+          RAW_RESPONSE=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" \
+            -H "Auth-API-Token: $API_TOKEN")
+
+          echo "Raw API response:"
+          echo "$RAW_RESPONSE" | jq '.'
+
+          EXISTING=$(echo "$RAW_RESPONSE" | jq -r '.records[] | select(.type=="A") | .name')
+
+          echo "Parsed existing A records:"
+          echo "$EXISTING" | sed 's/^/ - /'
+
+          echo "=== Processing desired subdomains ==="
+          while read SUB; do
+            [ -z "$SUB" ] && continue  # skip empty lines
+            FQDN="${SUB}.${PRIMARY_DOMAIN}"
+
+            echo "→ Checking: $FQDN"
+            if echo "$EXISTING" | grep -qx "$FQDN"; then
+              echo "✅ Exists already: $FQDN (skipping)"
             else
-              echo "A record for domain $FULL_DOMAIN already exists. Skipping creation."
+              echo "➕ Not found, creating A record for: $FQDN"
+              RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
+                -H "Auth-API-Token: $API_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{
+                      \"zone_id\": \"$ZONE_ID\",
+                      \"type\": \"A\",
+                      \"name\": \"$SUB\",
+                      \"value\": \"$SERVER_IP\",
+                      \"ttl\": 86400
+                    }")
+
+              echo "API response for $FQDN:"
+              echo "$RESPONSE" | jq '.'
             fi
-          done < ./domains.txt
+          done < domains.txt
         working-directory: ./compose
+
+
 
   ansible:
     name: Configure VM with Ansible
