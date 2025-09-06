@@ -96,7 +96,7 @@ jobs:
             HETZNER_API="https://dns.hetzner.com/api/v1"
             API_TOKEN="${{ secrets.DNS_API_TOKEN }}"
             SERVER_IP="${{ needs.terraform.outputs.public_ip }}"
-            ZONE_ID="${{ secrets.DNS_ZONE }}"
+            ZONE_ID="${{ secrets.DNS_ZONE_ID }}"
   
             echo "API Token: $API_TOKEN"
             echo "Zone ID: $ZONE_ID"
