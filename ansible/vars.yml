@@ -10,7 +10,7 @@ storagebox_mount_path: "{{ dev_home_path }}/storagebox"
 scripts_path: "{{ dev_home_path }}/scripts"
 
 # Domain Configuration
-primary_domain: "mrdevops.pro"
+primary_domain: "{{ lookup('env', 'PRIMARY_DOMAIN', 'mrdevops.pro') }}"
 traefik_domain: "traefik.{{ primary_domain }}"
 crm_domain: "crm.{{ primary_domain }}"
 mail_domain: "mail.{{ primary_domain }}"

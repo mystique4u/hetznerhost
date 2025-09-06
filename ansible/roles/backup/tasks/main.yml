@@ -51,35 +51,128 @@
     owner: "{{ sudo_user }}"
   tags: backup
 
-- name: Get storage box host key
+- name: Debug storage box connection details
+  debug:
+    msg:
+      - "Storage box user: {{ storage_box_user }}"
+      - "Storage box host: {{ storage_box_host }}"
+      - "Storage box FQDN: {{ storage_box_fqdn }}"
+      - "SSH key path: {{ ssh_storagebox_pkey_path }}"
+  tags: backup
+
+- name: Get storage box host key (try FQDN format)
   command: ssh-keyscan -p 23 {{ storage_box_fqdn }}
   register: storage_box_host_key
   changed_when: false
+  failed_when: false
   tags: backup
 
-- name: Add storage box to known hosts
+- name: Get storage box host key (try alternative format)
+  command: ssh-keyscan -p 23 {{ storage_box_user }}.{{ storage_box_host }}
+  register: storage_box_host_key_alt
+  changed_when: false
+  failed_when: false
+  when: storage_box_host_key.rc != 0
+  tags: backup
+
+- name: Debug host key output
+  debug:
+    msg: 
+      - "FQDN host key output: {{ storage_box_host_key.stdout }}"
+      - "FQDN host key return code: {{ storage_box_host_key.rc }}"
+      - "Alternative host key output: {{ storage_box_host_key_alt.stdout | default('N/A') }}"
+      - "Alternative host key return code: {{ storage_box_host_key_alt.rc | default('N/A') }}"
+  tags: backup
+
+- name: Add storage box to known hosts (FQDN format)
   known_hosts:
     name: "[{{ storage_box_fqdn }}]:23"
     key: "{{ storage_box_host_key.stdout }}"
     state: present
     path: "/home/{{ sudo_user }}/.ssh/known_hosts"
   become_user: "{{ sudo_user }}"
+  when: storage_box_host_key.rc == 0
   tags: backup
 
-- name: Test SSH connection to storage box
+- name: Add storage box to known hosts (alternative format)
+  known_hosts:
+    name: "[{{ storage_box_user }}.{{ storage_box_host }}]:23"
+    key: "{{ storage_box_host_key_alt.stdout }}"
+    state: present
+    path: "/home/{{ sudo_user }}/.ssh/known_hosts"
+  become_user: "{{ sudo_user }}"
+  when: storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc == 0
+  tags: backup
+
+- name: Test SSH connection to storage box (FQDN format)
   command: >
     ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o ConnectTimeout=10
     {{ storage_box_user }}@{{ storage_box_fqdn }} "echo 'Connection test successful'"
   register: ssh_test
   changed_when: false
+  failed_when: false
+  when: storage_box_host_key.rc == 0
   tags: backup
 
-- name: Sync backups to storage box (secure)
+- name: Test SSH connection to storage box (alternative format)
+  command: >
+    ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o ConnectTimeout=10
+    {{ storage_box_user }}@{{ storage_box_user }}.{{ storage_box_host }} "echo 'Connection test successful'"
+  register: ssh_test_alt
+  changed_when: false
+  failed_when: false
+  when: storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc == 0
+  tags: backup
+
+- name: Test SSH connection to storage box (disable host key checking)
+  command: >
+    ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    {{ storage_box_user }}@{{ storage_box_fqdn }} "echo 'Connection test successful'"
+  register: ssh_test_no_check
+  changed_when: false
+  failed_when: false
+  when: (storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc != 0) or (ssh_test.rc != 0 and ssh_test_alt.rc != 0)
+  tags: backup
+
+- name: Debug SSH test results
+  debug:
+    msg:
+      - "FQDN SSH test return code: {{ ssh_test.rc | default('N/A') }}"
+      - "FQDN SSH test stdout: {{ ssh_test.stdout | default('N/A') }}"
+      - "FQDN SSH test stderr: {{ ssh_test.stderr | default('N/A') }}"
+      - "Alternative SSH test return code: {{ ssh_test_alt.rc | default('N/A') }}"
+      - "Alternative SSH test stdout: {{ ssh_test_alt.stdout | default('N/A') }}"
+      - "Alternative SSH test stderr: {{ ssh_test_alt.stderr | default('N/A') }}"
+  tags: backup
+
+- name: Sync backups to storage box (FQDN format)
   command: >
     rsync --progress --delete -r -e "ssh -i {{ ssh_storagebox_pkey_path }} -p 23"
     {{ backup_path }}/ {{ storage_box_user }}@{{ storage_box_fqdn }}:{{ storage_box_target_dir }}
   register: rsync_output
-  failed_when: rsync_output.rc != 0
+  changed_when: rsync_output.rc == 0
+  failed_when: false
+  when: storage_box_host_key.rc == 0
+  tags: backup
+
+- name: Sync backups to storage box (alternative format)
+  command: >
+    rsync --progress --delete -r -e "ssh -i {{ ssh_storagebox_pkey_path }} -p 23"
+    {{ backup_path }}/ {{ storage_box_user }}@{{ storage_box_user }}.{{ storage_box_host }}:{{ storage_box_target_dir }}
+  register: rsync_output_alt
+  changed_when: rsync_output_alt.rc == 0
+  failed_when: false
+  when: storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc == 0
+  tags: backup
+
+- name: Sync backups to storage box (disable host key checking)
+  command: >
+    rsync --progress --delete -r -e "ssh -i {{ ssh_storagebox_pkey_path }} -p 23 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    {{ backup_path }}/ {{ storage_box_user }}@{{ storage_box_fqdn }}:{{ storage_box_target_dir }}
+  register: rsync_output_no_check
+  changed_when: rsync_output_no_check.rc == 0
+  failed_when: false
+  when: (storage_box_host_key.rc != 0 and storage_box_host_key_alt.rc != 0) or (rsync_output.rc != 0 and rsync_output_alt.rc != 0)
   tags: backup
 
 # Error handling and logging

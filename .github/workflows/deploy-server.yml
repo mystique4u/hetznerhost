@@ -63,30 +63,34 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y curl jq
       # it is working only for subdomains. IT WILL NOT WORK FOR SUB SUB*N domains
-      - name: Extract domain names from Traefik labels in docker-compose.yml
+      - name: Define domain names for DNS management
         run: |
-          echo "Raw extraction:"
-          # Extract domains directly from the docker-compose.yml using the optimized regex
-          grep -oP 'Host\(`\K[^\`]+(?=`\))' docker-compose.yml
-      
-          echo "Domains after processing:"
-          # Extract and trim everything after the first dot
-          DOMAINS=$(grep -oP 'Host\(`\K[^\`]+(?=`\))' docker-compose.yml | cut -d '.' -f 1)
-          echo "$DOMAINS"
-      
-          # Write domains to a file for further processing
-          echo "$DOMAINS" > ./domains.txt
-      
-          # Debug to check the contents of domains.txt
-          echo "Contents of domains.txt:"
+          # Define the primary domain and subdomains
+          PRIMARY_DOMAIN="${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}"
+          TRAEFIK_DOMAIN="traefik.${PRIMARY_DOMAIN}"
+          CRM_DOMAIN="crm.${PRIMARY_DOMAIN}"
+          MAIL_DOMAIN="mail.${PRIMARY_DOMAIN}"
+          PORTAINER_DOMAIN="portainer.${PRIMARY_DOMAIN}"
+          
+          # Create domains list
+          echo "traefik" > ./domains.txt
+          echo "crm" >> ./domains.txt
+          echo "mail" >> ./domains.txt
+          echo "portainer" >> ./domains.txt
+          
+          echo "Primary domain: ${PRIMARY_DOMAIN}"
+          echo "Domains to be created:"
           cat ./domains.txt
-        working-directory: ./compose  # Set working directory to compose/
+        working-directory: ./compose
   
       - name: Check and create domains using Hetzner API
         run: |
           echo "Starting domain management process..."
-          while read DOMAIN; do
-            echo "Processing domain: $DOMAIN"
+          PRIMARY_DOMAIN="${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}"
+          
+          while read SUBDOMAIN; do
+            FULL_DOMAIN="${SUBDOMAIN}.${PRIMARY_DOMAIN}"
+            echo "Processing domain: $FULL_DOMAIN"
   
             # API endpoint and token for Hetzner DNS
             HETZNER_API="https://dns.hetzner.com/api/v1"
@@ -99,10 +103,10 @@ jobs:
             echo "Server IP: $SERVER_IP"
   
             # Check if the A record already exists for the domain
-            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$DOMAIN\" and .type == \"A\")")
+            EXISTING_RECORD=$(curl -s -X GET "$HETZNER_API/records?zone_id=$ZONE_ID" -H "Auth-API-Token: $API_TOKEN" | jq -r ".records[] | select(.name == \"$FULL_DOMAIN\" and .type == \"A\")")
   
             if [ -z "$EXISTING_RECORD" ]; then
-              echo "Domain $DOMAIN does not have an A record. Creating it..."
+              echo "Domain $FULL_DOMAIN does not have an A record. Creating it..."
               
               # Create the new A record for the domain
               CREATE_RECORD_RESPONSE=$(curl -s -X POST "$HETZNER_API/records" \
@@ -112,13 +116,13 @@ jobs:
                   \"value\": \"$SERVER_IP\",
                   \"ttl\": 86400,
                   \"type\": \"A\",
-                  \"name\": \"$DOMAIN\",
+                  \"name\": \"$FULL_DOMAIN\",
                   \"zone_id\": \"$ZONE_ID\"
                 }")
   
-              echo "A record for domain $DOMAIN created successfully"
+              echo "A record for domain $FULL_DOMAIN created successfully"
             else
-              echo "A record for domain $DOMAIN already exists. Skipping creation."
+              echo "A record for domain $FULL_DOMAIN already exists. Skipping creation."
             fi
           done < ./domains.txt
         working-directory: ./compose
@@ -173,6 +177,7 @@ jobs:
         run: ansible-playbook -i inventory.yml playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          PRIMARY_DOMAIN: ${{ secrets.PRIMARY_DOMAIN || 'mrdevops.pro' }}
           COMPOSE_ENV: ${{ secrets.COMPOSE_ENV }}
           STORAGE_BOX_USER: ${{ secrets.STORAGE_BOX_USER }}
           STORAGE_BOX_HOST: ${{ secrets.STORAGE_BOX_HOST }}
